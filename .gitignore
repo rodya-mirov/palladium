@@ -1,0 +1,5 @@
+# IDE things
+/.vscode
+
+# Compiled things
+/target
