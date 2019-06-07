@@ -27,8 +27,8 @@ pub struct SkillTree {
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct ExpGain<'a> {
-    exp: usize,
-    skill_name: &'a str,
+    pub exp: usize,
+    pub skill_name: &'a str,
 }
 
 // TODO: error handling
