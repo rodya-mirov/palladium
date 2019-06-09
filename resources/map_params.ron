@@ -1,0 +1,17 @@
+(
+    room_dimensions: (
+        room_min_width: 5,
+        room_max_width: 15,
+        room_min_height: 5,
+        room_max_height: 15,
+    ),
+
+    map_dimensions: (
+        map_width: 120,
+        map_height: 500,
+    ),
+
+    max_retries: 250000,
+
+    seed: 12487631297,
+)

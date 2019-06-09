@@ -1,3 +1,4 @@
+mod maps;
 mod skills;
 
 use std::fs::File;
@@ -26,6 +27,21 @@ fn run_skill_stuff() {
     );
 }
 
+fn run_map_stuff() {
+    let mut map_param_str = String::new();
+    File::open("resources/map_params.ron")
+        .expect("File should exist")
+        .read_to_string(&mut map_param_str)
+        .expect("Should be able to read");
+
+    let map_params: maps::MapGenerationParams = ron::de::from_str(&map_param_str).expect("Should parse");
+
+    let map = maps::Map::make_random(&map_params);
+
+    map.draw();
+}
+
 fn main() {
     run_skill_stuff();
+    run_map_stuff();
 }
