@@ -5,6 +5,7 @@ pub use params::*;
 
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub enum Square {
+    Void, // off the map
     Open,
     Floor,
     Wall,
@@ -13,13 +14,14 @@ pub enum Square {
 }
 
 impl Square {
-    fn to_char(&self) -> char {
+    pub fn to_char(&self) -> char {
         match self {
+            Square::Void => '*',
             Square::Open => '*',
             Square::Floor => ' ',
             Square::Wall => '█',
-            Square::VerticalDoor => '¤',
-            Square::HorizontalDoor => '¤',
+            Square::VerticalDoor => 'd',
+            Square::HorizontalDoor => 'd',
         }
     }
 }
@@ -32,10 +34,14 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn get_square(&self, x: usize, y: usize) -> Result<&Square, ()> {
-        let ind = self.get_index(x, y)?;
+    pub fn get_square(&self, x: i32, y: i32) -> Square {
+        if x < 0 || y < 0 {
+            return Square::Void;
+        }
 
-        Ok(&self.cells[ind])
+        self.get_index(x as usize, y as usize)
+            .map(|ind| self.cells[ind])
+            .unwrap_or(Square::Void)
     }
 
     pub fn set_square(&mut self, x: usize, y: usize, square: Square) -> Result<(), ()> {

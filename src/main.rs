@@ -1,14 +1,34 @@
+#![allow(dead_code)] // TODO: delete this
+#![allow(unused_imports)]
+
 mod maps;
-mod skills;
 mod rng;
+mod skills;
+mod ui;
 
 use std::fs::File;
 use std::io::Read;
 
+use quicksilver::{
+    geom::Vector,
+    lifecycle::{run, Settings, State, Window},
+    Result as QsResult,
+};
+
+fn get_map_gen_config() -> maps::MapGenerationParams {
+    let mut map_param_str = String::new();
+    File::open("static/config/map_params.ron")
+        .expect("Map config file should exist")
+        .read_to_string(&mut map_param_str)
+        .expect("Should be able to read");
+
+    ron::de::from_str(&map_param_str).expect("Should parse")
+}
+
 fn run_skill_stuff() {
     let mut file_contents = String::new();
-    File::open("resources/skills.ron")
-        .expect("File should exist")
+    File::open("static/config/skills.ron")
+        .expect("Skills config file should exist")
         .read_to_string(&mut file_contents)
         .expect("File should read");
 
@@ -29,13 +49,7 @@ fn run_skill_stuff() {
 }
 
 fn run_map_stuff() {
-    let mut map_param_str = String::new();
-    File::open("resources/map_params.ron")
-        .expect("File should exist")
-        .read_to_string(&mut map_param_str)
-        .expect("Should be able to read");
-
-    let map_params: maps::MapGenerationParams = ron::de::from_str(&map_param_str).expect("Should parse");
+    let map_params = get_map_gen_config();
 
     let map = maps::Map::make_random(&map_params);
 
@@ -43,6 +57,11 @@ fn run_map_stuff() {
 }
 
 fn main() {
-    run_skill_stuff();
-    run_map_stuff();
+    get_map_gen_config();
+
+    let settings = Settings {
+        scale: quicksilver::graphics::ImageScaleStrategy::Blur,
+        ..Default::default()
+    };
+    run::<ui::Game>("Palladium", Vector::new(800, 600), settings);
 }

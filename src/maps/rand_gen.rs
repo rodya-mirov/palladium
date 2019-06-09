@@ -1,7 +1,7 @@
 use super::*;
 
+use crate::rng::{make_rng, PalladRng, Rng};
 use std::cmp::{max, min};
-use crate::rng::{PalladRng, Rng, make_rng};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 struct Room {
@@ -163,16 +163,16 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
     }
 
     let num_rooms = rooms.len();
-    
-    for i in 0 .. num_rooms {
+
+    for i in 0..num_rooms {
         let a = rooms[i];
-        for j in i+1 .. num_rooms {
+        for j in i + 1..num_rooms {
             let b = rooms[j];
 
             if let Some(door) = a.try_make_door(&b, &mut rng) {
                 let square = match door.orientation {
                     Orientation::Horizontal => Square::HorizontalDoor,
-                    Orientation::Vertical => Square::VerticalDoor
+                    Orientation::Vertical => Square::VerticalDoor,
                 };
                 map.set_square(door.x, door.y, square).expect("Indices should be valid");
             }
