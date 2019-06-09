@@ -10,8 +10,4 @@ serde_json = "1.0"
 ron = "*"
 rand = "0.6"
 # More features: "collisions", "complex_shapes", "immi_ui", "sounds", gamepads
-quicksilver = {
-    version = "0.3.6",
-    default-features = false,
-    features = ["fonts", "saving"]
-}
+quicksilver = { version = "0.3.6", default-features = false, features = ["fonts", "saving"] }
