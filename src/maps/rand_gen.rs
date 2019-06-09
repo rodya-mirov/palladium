@@ -1,12 +1,7 @@
-#![allow(deprecated)]
-// use deprecated RNG because the rand team screwed up, the non-deprecated thing is broken
-// that's what you get with pre-1.0 software i guess
-
 use super::*;
 
-use std::cmp::min;
-
-use rand::{Isaac64Rng, Rng, SeedableRng};
+use std::cmp::{max, min};
+use crate::rng::{PalladRng, Rng, make_rng};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 struct Room {
@@ -14,6 +9,19 @@ struct Room {
     right: usize,
     top: usize,
     bottom: usize,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+struct Door {
+    x: usize,
+    y: usize,
+    orientation: Orientation,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+enum Orientation {
+    Vertical,
+    Horizontal,
 }
 
 impl Room {
@@ -30,38 +38,54 @@ impl Room {
 
         dimension_bad(self.left, self.right, other.left, other.right) && dimension_bad(self.top, self.bottom, other.top, other.bottom)
     }
+
+    fn try_make_door(&self, other: &Room, rng: &mut PalladRng) -> Option<Door> {
+        // horizontal touching, maybe
+        if self.left == other.right || self.right == other.left {
+            let y_min = max(self.top + 1, other.top + 1);
+            let y_max = min(self.bottom - 1, other.bottom - 1);
+
+            if y_min > y_max {
+                None
+            } else {
+                let x = if self.left == other.right { self.left } else { self.right };
+                let y = rng.gen_range(y_min, y_max + 1);
+                Some(Door {
+                    x,
+                    y,
+                    orientation: Orientation::Horizontal,
+                })
+            }
+        } else if self.top == other.bottom || self.bottom == other.top {
+            let x_min = max(self.left + 1, other.left + 1);
+            let x_max = min(self.right - 1, other.right - 1);
+
+            if x_min > x_max {
+                None
+            } else {
+                let x = rng.gen_range(x_min, x_max + 1);
+                let y = if self.top == other.bottom { self.top } else { self.bottom };
+                Some(Door {
+                    x,
+                    y,
+                    orientation: Orientation::Vertical,
+                })
+            }
+        } else {
+            None
+        }
+    }
 }
 
-pub fn rand_gen(params: &MapGenerationParams) -> Map {
+fn make_random_rooms(params: &MapGenerationParams, rng: &mut PalladRng) -> Vec<Room> {
     let width = params.map_dimensions.map_width;
     let height = params.map_dimensions.map_height;
-    let seed = params.seed;
-
-    let capacity = width * height;
-    let mut cells = Vec::with_capacity(capacity);
-    for _ in 0..capacity {
-        cells.push(Square::OPEN);
-    }
-
-    let mut map = Map { width, height, cells };
 
     let min_width = params.room_dimensions.room_min_width;
     let max_width = params.room_dimensions.room_max_width;
 
     let min_height = params.room_dimensions.room_min_height;
     let max_height = params.room_dimensions.room_max_height;
-
-    let mut rng = Isaac64Rng::seed_from_u64(seed);
-
-    for x in 0..width {
-        map.set_square(x, 0, Square::WALL).expect("Indices should be valid");
-        map.set_square(x, height - 1, Square::WALL).expect("Indices should be valid");
-    }
-
-    for y in 0..height {
-        map.set_square(0, y, Square::WALL).expect("Indices should be valid");
-        map.set_square(width - 1, y, Square::WALL).expect("Indices should be valid");
-    }
 
     let mut rooms: Vec<Room> = Vec::new();
     let mut retries_remaining = params.max_retries;
@@ -87,27 +111,72 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
             }
         }
 
+        rooms.push(room);
+    }
+
+    rooms
+}
+
+pub fn rand_gen(params: &MapGenerationParams) -> Map {
+    let width = params.map_dimensions.map_width;
+    let height = params.map_dimensions.map_height;
+    let seed = params.seed;
+
+    let capacity = width * height;
+    let mut cells = Vec::with_capacity(capacity);
+    for _ in 0..capacity {
+        cells.push(Square::Open);
+    }
+
+    let mut map = Map { width, height, cells };
+
+    for x in 0..width {
+        map.set_square(x, 0, Square::Wall).expect("Indices should be valid");
+        map.set_square(x, height - 1, Square::Wall).expect("Indices should be valid");
+    }
+
+    for y in 0..height {
+        map.set_square(0, y, Square::Wall).expect("Indices should be valid");
+        map.set_square(width - 1, y, Square::Wall).expect("Indices should be valid");
+    }
+
+    let mut rng = make_rng(seed);
+
+    let rooms = make_random_rooms(params, &mut rng);
+
+    for room in &rooms {
         for x in room.left..(room.right + 1) {
-            map.set_square(x, room.top, Square::WALL).expect("Indices should be valid");
-            map.set_square(x, room.bottom, Square::WALL).expect("Indices should be valid");
+            map.set_square(x, room.top, Square::Wall).expect("Indices should be valid");
+            map.set_square(x, room.bottom, Square::Wall).expect("Indices should be valid");
         }
 
         for y in room.top..(room.bottom + 1) {
-            map.set_square(room.left, y, Square::WALL).expect("Indices should be valid");
-            map.set_square(room.right, y, Square::WALL).expect("Indices should be valid");
+            map.set_square(room.left, y, Square::Wall).expect("Indices should be valid");
+            map.set_square(room.right, y, Square::Wall).expect("Indices should be valid");
         }
 
         for x in (room.left + 1)..room.right {
             for y in (room.top + 1)..room.bottom {
-                map.set_square(x, y, Square::FLOOR).expect("Indices should be valid");
+                map.set_square(x, y, Square::Floor).expect("Indices should be valid");
             }
         }
-
-        rooms.push(room);
     }
 
-    if retries_remaining == 0 {
-        println!("Got {} rooms :shrug:", rooms.len());
+    let num_rooms = rooms.len();
+    
+    for i in 0 .. num_rooms {
+        let a = rooms[i];
+        for j in i+1 .. num_rooms {
+            let b = rooms[j];
+
+            if let Some(door) = a.try_make_door(&b, &mut rng) {
+                let square = match door.orientation {
+                    Orientation::Horizontal => Square::HorizontalDoor,
+                    Orientation::Vertical => Square::VerticalDoor
+                };
+                map.set_square(door.x, door.y, square).expect("Indices should be valid");
+            }
+        }
     }
 
     map

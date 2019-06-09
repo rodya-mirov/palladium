@@ -1,5 +1,6 @@
 mod maps;
 mod skills;
+mod rng;
 
 use std::fs::File;
 use std::io::Read;

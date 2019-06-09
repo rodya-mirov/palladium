@@ -3,18 +3,23 @@ mod rand_gen;
 
 pub use params::*;
 
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum Square {
-    OPEN,
-    FLOOR,
-    WALL,
+    Open,
+    Floor,
+    Wall,
+    VerticalDoor,
+    HorizontalDoor,
 }
 
 impl Square {
     fn to_char(&self) -> char {
         match self {
-            Square::OPEN => '*',
-            Square::FLOOR => ' ',
-            Square::WALL => 'X',
+            Square::Open => '*',
+            Square::Floor => ' ',
+            Square::Wall => '█',
+            Square::VerticalDoor => '¤',
+            Square::HorizontalDoor => '¤',
         }
     }
 }

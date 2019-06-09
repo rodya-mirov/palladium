@@ -1,17 +1,17 @@
 (
     room_dimensions: (
-        room_min_width: 5,
-        room_max_width: 15,
-        room_min_height: 5,
-        room_max_height: 15,
+        room_min_width: 8,
+        room_max_width: 12,
+        room_min_height: 8,
+        room_max_height: 12,
     ),
 
     map_dimensions: (
-        map_width: 120,
-        map_height: 500,
+        map_width: 180,
+        map_height: 50,
     ),
 
     max_retries: 250000,
 
-    seed: 12487631297,
+    seed: 1248763297,
 )
