@@ -14,7 +14,7 @@ pub enum Square {
 }
 
 impl Square {
-    pub fn to_char(&self) -> char {
+    pub fn to_char(self) -> char {
         match self {
             Square::Void => '*',
             Square::Open => '*',
@@ -65,16 +65,6 @@ impl Map {
         }
 
         Ok(ind)
-    }
-
-    pub fn draw(&self) {
-        for (ind, square) in self.cells.iter().enumerate() {
-            if ind % self.width == 0 {
-                println!("");
-            }
-            print!("{}", square.to_char());
-        }
-        println!("");
     }
 
     pub fn make_random(params: &MapGenerationParams) -> Map {

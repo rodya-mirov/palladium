@@ -27,13 +27,7 @@ enum Orientation {
 impl Room {
     fn bad_touch(&self, other: &Room) -> bool {
         fn dimension_bad(a_min: usize, a_max: usize, b_min: usize, b_max: usize) -> bool {
-            if a_min == b_max || a_max == b_min {
-                false
-            } else if a_max + 1 < b_min || b_max + 1 < a_min {
-                false
-            } else {
-                true
-            }
+            !((a_min == b_max || a_max == b_min) || (a_max + 1 < b_min || b_max + 1 < a_min))
         }
 
         dimension_bad(self.left, self.right, other.left, other.right) && dimension_bad(self.top, self.bottom, other.top, other.bottom)
@@ -145,12 +139,12 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
     let rooms = make_random_rooms(params, &mut rng);
 
     for room in &rooms {
-        for x in room.left..(room.right + 1) {
+        for x in room.left..=room.right {
             map.set_square(x, room.top, Square::Wall).expect("Indices should be valid");
             map.set_square(x, room.bottom, Square::Wall).expect("Indices should be valid");
         }
 
-        for y in room.top..(room.bottom + 1) {
+        for y in room.top..=room.bottom {
             map.set_square(room.left, y, Square::Wall).expect("Indices should be valid");
             map.set_square(room.right, y, Square::Wall).expect("Indices should be valid");
         }

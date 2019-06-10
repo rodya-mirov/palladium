@@ -243,16 +243,16 @@ fn render_map(offset_px: Vector, game: &mut Game, window: &mut Window) -> QsResu
 
     tileset.execute(|tileset| {
         map.execute(|map| {
-            for x in x_min..(x_max + 1) {
-                for y in y_min..(y_max + 1) {
+            for x in x_min..=x_max {
+                for y in y_min..=y_max {
                     let square_char = map.get_square(x, y).to_char();
 
                     if let Some(image) = tileset.get(&square_char) {
                         let pos_px = Vector::new(x - x_min, y - y_min).times(tile_size_px) + offset_px;
                         window.draw(&Rectangle::new(pos_px, image.area().size()), Blended(&image, Color::BLACK));
-                    } else {
-                        println!("ERROR: Unrecognized char: {}", square_char);
                     }
+
+                    // TODO: do something on unknown characters
                 }
             }
 
