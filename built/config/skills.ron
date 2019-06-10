@@ -1,0 +1,15 @@
+[   
+    // Root node
+    (
+        name: "Level",
+    ),
+    (
+        name: "Dexterity",
+        parents: [
+            (
+                name: "Level",
+                strength: 1
+            )
+        ]
+    )
+]

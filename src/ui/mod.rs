@@ -11,7 +11,9 @@ use quicksilver::{
     Future,
 };
 
-use crate::maps::Map;
+use crate::maps::{Map, Square};
+
+const PLAYER_CHAR: char = '@';
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 struct TilePos {
@@ -29,11 +31,41 @@ struct CameraInfo {
 }
 
 impl CameraInfo {
-    fn translate(&mut self, dx: i32, dy: i32) {
-        self.x_min += dx;
-        self.x_max += dx;
-        self.y_min += dy;
-        self.y_max += dy;
+    fn translate(&mut self, translation: TilePos) {
+        self.x_min += translation.x;
+        self.x_max += translation.x;
+        self.y_min += translation.y;
+        self.y_max += translation.y;
+    }
+}
+
+struct Player {
+    tile_pos: TilePos,
+}
+
+impl Player {
+    fn try_move(&mut self, translation: TilePos, map: &Map) -> bool {
+        let new_pos = TilePos {
+            x: self.tile_pos.x + translation.x,
+            y: self.tile_pos.y + translation.y,
+        };
+        let to_move_to = map.get_square(new_pos.x, new_pos.y);
+
+        let can_move = match to_move_to {
+            Square::Void => false,
+            Square::Wall => false,
+            Square::Open => false,
+
+            Square::Floor => true,
+            Square::HorizontalDoor => true,
+            Square::VerticalDoor => true,
+        };
+
+        if can_move {
+            self.tile_pos = new_pos;
+        }
+
+        can_move
     }
 }
 
@@ -41,6 +73,8 @@ pub struct Game {
     map: Asset<Map>,
 
     camera: CameraInfo,
+
+    player: Player,
 
     title: Asset<Image>,
     mononoki_font_info: Asset<Image>,
@@ -96,12 +130,17 @@ impl State for Game {
             Ok(map)
         }));
 
-        let camera = CameraInfo {
-            x_min: -3,
-            x_max: 18,
+        let player = Player {
+            // TODO: make this square guaranteed to not be empty
+            tile_pos: TilePos { x: 10, y: 10 },
+        };
 
-            y_min: -3,
-            y_max: 18,
+        let camera = CameraInfo {
+            x_min: 0,
+            x_max: 20,
+
+            y_min: 0,
+            y_max: 20,
         };
 
         Ok(Game {
@@ -111,6 +150,7 @@ impl State for Game {
 
             camera,
             map,
+            player,
 
             tile_size_px,
             tileset,
@@ -120,17 +160,40 @@ impl State for Game {
     fn update(&mut self, window: &mut Window) -> QsResult<()> {
         use quicksilver::input::ButtonState::*;
 
+        let map = &mut self.map;
+        let player = &mut self.player;
+        let camera = &mut self.camera;
+
         let keyboard = window.keyboard();
 
-        if keyboard[Key::Left] == Pressed {
-            self.camera.translate(-1, 0);
-        } else if keyboard[Key::Up] == Pressed {
-            self.camera.translate(0, -1);
-        } else if keyboard[Key::Down] == Pressed {
-            self.camera.translate(0, 1);
-        } else if keyboard[Key::Right] == Pressed {
-            self.camera.translate(1, 0);
+        if keyboard[Key::Escape] == Pressed {
+            window.close();
+            return Ok(());
         }
+
+        map.execute(|map| {
+            let player_move = if keyboard[Key::Left] == Pressed {
+                Some(TilePos { x: -1, y: 0 })
+            } else if keyboard[Key::Up] == Pressed {
+                Some(TilePos { x: 0, y: -1 })
+            } else if keyboard[Key::Down] == Pressed {
+                Some(TilePos { x: 0, y: 1 })
+            } else if keyboard[Key::Right] == Pressed {
+                Some(TilePos { x: 1, y: 0 })
+            } else {
+                None
+            };
+
+            if let Some(player_move) = player_move {
+                let can_move = player.try_move(player_move, map);
+                if can_move {
+                    camera.translate(player_move);
+                }
+            }
+
+            Ok(())
+        })?;
+
         Ok(())
     }
 
@@ -170,7 +233,7 @@ impl State for Game {
 fn render_map(offset_px: Vector, game: &mut Game, window: &mut Window) -> QsResult<()> {
     let tile_size_px = game.tile_size_px;
 
-    let (tileset, map, camera) = (&mut game.tileset, &mut game.map, &game.camera);
+    let (tileset, map, camera, player) = (&mut game.tileset, &mut game.map, &game.camera, &game.player);
 
     let x_min = camera.x_min;
     let x_max = camera.x_max;
@@ -193,8 +256,16 @@ fn render_map(offset_px: Vector, game: &mut Game, window: &mut Window) -> QsResu
                 }
             }
 
+            let image = tileset.get(&PLAYER_CHAR).expect("Player char had better be defined");
+
+            let player_pos = player.tile_pos;
+            let player_pos_px = Vector::new(player_pos.x - x_min, player_pos.y - y_min).times(tile_size_px) + offset_px;
+            window.draw(&Rectangle::new(player_pos_px, image.area().size()), Blended(&image, Color::PURPLE));
+
             Ok(())
-        })
+        })?;
+
+        Ok(())
     })?;
 
     Ok(())
