@@ -1,24 +1,38 @@
 use super::*;
 
 use std::collections::HashMap;
+use std::ops::Add;
 
 use quicksilver::{
-    geom::{Rectangle, Shape, Vector},
+    geom::{Rectangle, Vector},
     graphics::{Color, Font, FontStyle, Image},
-    lifecycle::{run, Asset, Settings, State, Window},
+    lifecycle::{Asset, State, Window},
     load_file,
     prelude::*,
     Future,
 };
 
-use crate::maps::{Map, Square};
+use crate::maps::{Map, Square, SquareType, VisibilityType};
+
+mod visibility;
 
 const PLAYER_CHAR: char = '@';
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-struct TilePos {
+pub struct TilePos {
     x: i32,
     y: i32,
+}
+
+impl Add<TilePos> for TilePos {
+    type Output = TilePos;
+
+    fn add(self, rhs: TilePos) -> TilePos {
+        TilePos {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -43,6 +57,16 @@ struct Player {
     tile_pos: TilePos,
 }
 
+fn with_vis(color: Color, visibility: VisibilityType) -> Color {
+    let alpha = match visibility {
+        VisibilityType::NotSeen => 0.0,
+        VisibilityType::Remembered => 0.3,
+        VisibilityType::CurrentlyVisible => 1.0,
+    };
+
+    color.with_alpha(alpha)
+}
+
 impl Player {
     fn try_move(&mut self, translation: TilePos, map: &Map) -> bool {
         let new_pos = TilePos {
@@ -51,14 +75,13 @@ impl Player {
         };
         let to_move_to = map.get_square(new_pos.x, new_pos.y);
 
-        let can_move = match to_move_to {
-            Square::Void => false,
-            Square::Wall => false,
-            Square::Open => false,
+        let can_move = match to_move_to.square_type {
+            SquareType::Void => false,
+            SquareType::Wall => false,
+            SquareType::Open => false,
 
-            Square::Floor => true,
-            Square::HorizontalDoor => true,
-            Square::VerticalDoor => true,
+            SquareType::Floor => true,
+            SquareType::Door => true,
         };
 
         if can_move {
@@ -124,23 +147,24 @@ impl State for Game {
             Ok(tileset)
         }));
 
-        let map: Asset<Map> = Asset::new(load_file("config/map_params.ron").and_then(|bytes| {
+        // TODO: make this square guaranteed to not be empty
+        let player_pos = TilePos { x: 15, y: 15 };
+
+        let player = Player { tile_pos: player_pos };
+
+        let map: Asset<Map> = Asset::new(load_file("config/map_params.ron").and_then(move |bytes| {
             let map_gen_params = ron::de::from_bytes(&bytes).expect("Should deserialize");
-            let map: Map = Map::make_random(&map_gen_params);
+            let mut map: Map = Map::make_random(&map_gen_params);
+            visibility::refresh_visibility(player_pos, &mut map, 1000); // TODO: vis range
             Ok(map)
         }));
 
-        let player = Player {
-            // TODO: make this square guaranteed to not be empty
-            tile_pos: TilePos { x: 10, y: 10 },
-        };
-
         let camera = CameraInfo {
             x_min: 0,
-            x_max: 20,
+            x_max: 30,
 
             y_min: 0,
-            y_max: 20,
+            y_max: 30,
         };
 
         Ok(Game {
@@ -188,6 +212,7 @@ impl State for Game {
                 let can_move = player.try_move(player_move, map);
                 if can_move {
                     camera.translate(player_move);
+                    visibility::refresh_visibility(player.tile_pos, map, 1000);
                 }
             }
 
@@ -198,7 +223,8 @@ impl State for Game {
     }
 
     fn draw(&mut self, window: &mut Window) -> QsResult<()> {
-        window.clear(Color::WHITE)?;
+        let bg_color = Color::from_hex("556887");
+        window.clear(bg_color)?;
 
         /* // Part of the tutorial but I mostly just hate it
         self.title.execute(|image| {
@@ -245,11 +271,14 @@ fn render_map(offset_px: Vector, game: &mut Game, window: &mut Window) -> QsResu
         map.execute(|map| {
             for x in x_min..=x_max {
                 for y in y_min..=y_max {
-                    let square_char = map.get_square(x, y).to_char();
+                    let square = map.get_square(x, y);
+                    let square_char = square.to_char();
 
                     if let Some(image) = tileset.get(&square_char) {
                         let pos_px = Vector::new(x - x_min, y - y_min).times(tile_size_px) + offset_px;
-                        window.draw(&Rectangle::new(pos_px, image.area().size()), Blended(&image, Color::BLACK));
+                        let rect = Rectangle::new(pos_px, image.area().size());
+                        window.draw(&rect, with_vis(Color::BLUE, square.visibility));
+                        window.draw(&rect, Blended(&image, with_vis(Color::WHITE, square.visibility)));
                     }
 
                     // TODO: do something on unknown characters

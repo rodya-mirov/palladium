@@ -46,12 +46,12 @@ Roadmap
 --
 
 * Engine
-  * Line of sight 
-  * Distinction between "unexplored / explored but not visible / visible" in rendering
-  * NPCs?
-  * Objects?
-  * Modals with choices (?)
-  * Save / load
+  [x] Line of sight 
+  [x] Distinction between "unexplored / explored but not visible / visible" in rendering
+  [] NPCs?
+  [] Objects?
+  [] Modals with choices (?)
+  [] Save / load
 * Interactivity
 * Danger
 * Obstacles

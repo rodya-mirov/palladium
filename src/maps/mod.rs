@@ -3,26 +3,49 @@ mod rand_gen;
 
 pub use params::*;
 
+const UNSEEN_VOID_SQUARE: Square = Square {
+    square_type: SquareType::Void,
+    visibility: VisibilityType::NotSeen,
+};
+
 #[derive(Eq, PartialEq, Copy, Clone)]
-pub enum Square {
+pub struct Square {
+    pub square_type: SquareType,
+    pub visibility: VisibilityType,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub enum VisibilityType {
+    NotSeen,
+    Remembered,
+    CurrentlyVisible,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone)]
+pub enum SquareType {
     Void, // off the map
-    Open,
+    Open, // not allocated to anything (should not be accessible to the player)
     Floor,
     Wall,
-    VerticalDoor,
-    HorizontalDoor,
+    Door,
 }
 
 impl Square {
     pub fn to_char(self) -> char {
-        match self {
-            Square::Void => '*',
-            Square::Open => '*',
-            Square::Floor => ' ',
-            Square::Wall => '█',
-            Square::VerticalDoor => 'd',
-            Square::HorizontalDoor => 'd',
+        match self.square_type {
+            SquareType::Void => '*',
+            SquareType::Open => '*',
+            SquareType::Floor => ' ',
+            SquareType::Wall => '█',
+            SquareType::Door => 'd',
         }
+    }
+}
+
+fn make_unseen_square(square_type: SquareType) -> Square {
+    Square {
+        square_type,
+        visibility: VisibilityType::NotSeen,
     }
 }
 
@@ -36,12 +59,23 @@ pub struct Map {
 impl Map {
     pub fn get_square(&self, x: i32, y: i32) -> Square {
         if x < 0 || y < 0 {
-            return Square::Void;
+            return UNSEEN_VOID_SQUARE;
         }
 
         self.get_index(x as usize, y as usize)
             .map(|ind| self.cells[ind])
-            .unwrap_or(Square::Void)
+            .unwrap_or(UNSEEN_VOID_SQUARE)
+    }
+
+    pub fn get_square_mut(&mut self, x: i32, y: i32) -> Option<&mut Square> {
+        if x < 0 || y < 0 {
+            return None;
+        }
+
+        match self.get_index(x as usize, y as usize) {
+            Ok(ind) => self.cells.get_mut(ind),
+            Err(()) => None,
+        }
     }
 
     pub fn set_square(&mut self, x: usize, y: usize, square: Square) -> Result<(), ()> {

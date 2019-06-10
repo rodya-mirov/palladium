@@ -1,20 +1,18 @@
-#![allow(dead_code)] // TODO: delete this
-#![allow(unused_imports)]
+#![allow(clippy::needless_range_loop)] // I'll decide which one is more readable
+#![allow(clippy::collapsible_if)] // I like it this way sometimes, for symmetry
+#![deny(clippy::print_stdout)] // For real though, print! will crash the wasm build
 
-#![allow(clippy::needless_range_loop)] // shut up clippy
-#![deny(clippy::print_stdout)] // these blow up wasm
+#![allow(dead_code)] // TODO: delete this
 
 mod maps;
+mod numerics;
 mod rng;
 mod skills;
 mod ui;
 
-use std::fs::File;
-use std::io::Read;
-
 use quicksilver::{
     geom::Vector,
-    lifecycle::{run, Settings, State, Window},
+    lifecycle::{run, Settings},
     Result as QsResult,
 };
 

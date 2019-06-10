@@ -112,6 +112,10 @@ fn make_random_rooms(params: &MapGenerationParams, rng: &mut PalladRng) -> Vec<R
 }
 
 pub fn rand_gen(params: &MapGenerationParams) -> Map {
+    let open = make_unseen_square(SquareType::Open);
+    let floor = make_unseen_square(SquareType::Floor);
+    let wall = make_unseen_square(SquareType::Wall);
+
     let width = params.map_dimensions.map_width;
     let height = params.map_dimensions.map_height;
     let seed = params.seed;
@@ -119,19 +123,19 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
     let capacity = width * height;
     let mut cells = Vec::with_capacity(capacity);
     for _ in 0..capacity {
-        cells.push(Square::Open);
+        cells.push(open);
     }
 
     let mut map = Map { width, height, cells };
 
     for x in 0..width {
-        map.set_square(x, 0, Square::Wall).expect("Indices should be valid");
-        map.set_square(x, height - 1, Square::Wall).expect("Indices should be valid");
+        map.set_square(x, 0, wall).expect("Indices should be valid");
+        map.set_square(x, height - 1, wall).expect("Indices should be valid");
     }
 
     for y in 0..height {
-        map.set_square(0, y, Square::Wall).expect("Indices should be valid");
-        map.set_square(width - 1, y, Square::Wall).expect("Indices should be valid");
+        map.set_square(0, y, wall).expect("Indices should be valid");
+        map.set_square(width - 1, y, wall).expect("Indices should be valid");
     }
 
     let mut rng = make_rng(seed);
@@ -140,18 +144,18 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
 
     for room in &rooms {
         for x in room.left..=room.right {
-            map.set_square(x, room.top, Square::Wall).expect("Indices should be valid");
-            map.set_square(x, room.bottom, Square::Wall).expect("Indices should be valid");
+            map.set_square(x, room.top, wall).expect("Indices should be valid");
+            map.set_square(x, room.bottom, wall).expect("Indices should be valid");
         }
 
         for y in room.top..=room.bottom {
-            map.set_square(room.left, y, Square::Wall).expect("Indices should be valid");
-            map.set_square(room.right, y, Square::Wall).expect("Indices should be valid");
+            map.set_square(room.left, y, wall).expect("Indices should be valid");
+            map.set_square(room.right, y, wall).expect("Indices should be valid");
         }
 
         for x in (room.left + 1)..room.right {
             for y in (room.top + 1)..room.bottom {
-                map.set_square(x, y, Square::Floor).expect("Indices should be valid");
+                map.set_square(x, y, floor).expect("Indices should be valid");
             }
         }
     }
@@ -164,10 +168,7 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
             let b = rooms[j];
 
             if let Some(door) = a.try_make_door(&b, &mut rng) {
-                let square = match door.orientation {
-                    Orientation::Horizontal => Square::HorizontalDoor,
-                    Orientation::Vertical => Square::VerticalDoor,
-                };
+                let square = make_unseen_square(SquareType::Door);
                 map.set_square(door.x, door.y, square).expect("Indices should be valid");
             }
         }
