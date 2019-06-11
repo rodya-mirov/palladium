@@ -99,12 +99,18 @@ pub struct Game {
 
     player: Player,
 
+    controls_pane: ControlsPane,
     title: Asset<Image>,
     mononoki_font_info: Asset<Image>,
     square_font_info: Asset<Image>,
 
     tileset: Asset<HashMap<char, Image>>,
     tile_size_px: Vector,
+}
+
+struct ControlsPane {
+    controls_image: Asset<Image>,
+    show_controls_image: bool,
 }
 
 impl State for Game {
@@ -132,6 +138,12 @@ impl State for Game {
         let game_glyphs = "* █d@";
 
         let tile_size_px = Vector::new(20, 20);
+
+        let controls_image = Asset::new(Font::load(font_square).and_then(move |font| {
+            let controls = vec!["Quit", "Controls", "Map"];
+
+            font.render(&(controls.join("\n")), &FontStyle::new(12.0, Color::BLACK))
+        }));
 
         let tileset = Asset::new(Font::load(font_square).and_then(move |text| {
             let tiles = text
@@ -171,6 +183,10 @@ impl State for Game {
             title,
             mononoki_font_info,
             square_font_info,
+            controls_pane: ControlsPane {
+                controls_image,
+                show_controls_image: true,
+            },
 
             camera,
             map,
@@ -190,7 +206,11 @@ impl State for Game {
 
         let keyboard = window.keyboard();
 
-        if keyboard[Key::Escape] == Pressed {
+        if keyboard[Key::C] == Pressed {
+            self.controls_pane.show_controls_image = !self.controls_pane.show_controls_image;
+        }
+
+        if keyboard[Key::Q] == Pressed {
             window.close();
             return Ok(());
         }
@@ -252,8 +272,27 @@ impl State for Game {
 
         render_map(offset_px, self, window)?;
 
+        render_controls_image(self, window)?;
+
         Ok(())
     }
+}
+
+fn render_controls_image(game: &mut Game, window: &mut Window) -> QsResult<()> {
+    if !game.controls_pane.show_controls_image {
+        return Ok(());
+    }
+
+    let controls_image = &mut game.controls_pane.controls_image;
+
+    controls_image.execute(|image| {
+        let screen_size = window.screen_size();
+        let image_size = image.area().size;
+
+        let render_pos = Vector::new(screen_size.x - image_size.x - 30.0, 30.0);
+        window.draw(&image.area().translate(render_pos), Img(&image));
+        Ok(())
+    })
 }
 
 fn render_map(offset_px: Vector, game: &mut Game, window: &mut Window) -> QsResult<()> {
