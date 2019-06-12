@@ -5,10 +5,12 @@
 
 mod maps;
 mod numerics;
+mod panel;
 mod rng;
 mod skills;
 mod state;
 mod ui;
+mod visibility;
 
 use quicksilver::{
     geom::Vector,

@@ -7,10 +7,8 @@ use quicksilver::{
     prelude::*,
 };
 
-use crate::maps::{Map, Square, SquareType, VisibilityType};
-use crate::state::{Game, TilePos};
-
-pub mod visibility;
+use crate::maps::VisibilityType;
+use crate::state::Game;
 
 const PLAYER_CHAR: char = '@';
 
@@ -27,28 +25,6 @@ fn with_vis(color: Color, visibility: VisibilityType) -> Color {
 pub fn render_game(game: &mut Game, window: &mut Window) -> QsResult<()> {
     let bg_color = Color::from_hex("556887");
     window.clear(bg_color)?;
-
-    /* // Part of the tutorial but I mostly just hate it
-    self.title.execute(|image| {
-        let rect = &image.area().with_center((window.screen_size().x as i32 / 2, 40));
-        let img = Img(&image);
-        window.draw(rect, img);
-        Ok(())
-    })?;
-    */
-
-    // TODO: put these in an attributions page
-    /*
-    self.mononoki_font_info.execute(|image| {
-        window.draw(&image.area().translate((20, window.screen_size().y as i32 - 80)), Img(&image));
-        Ok(())
-    })?;
-
-    self.square_font_info.execute(|image| {
-        window.draw(&image.area().translate((20, window.screen_size().y as i32 - 40)), Img(&image));
-        Ok(())
-    })?;
-    */
 
     let offset_px = Vector::new(50, 50);
 

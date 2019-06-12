@@ -11,8 +11,10 @@ use quicksilver::{
 };
 
 use crate::maps::{Map, SquareType};
-use crate::ui::visibility::refresh_visibility;
+use crate::panel::Panel;
+use crate::visibility::refresh_visibility;
 use crate::QsResult;
+
 pub struct Game {
     pub map: Asset<Map>,
 
@@ -21,9 +23,8 @@ pub struct Game {
     pub player: Player,
 
     pub controls_pane: ControlsPane,
-    pub title: Asset<Image>,
-    pub mononoki_font_info: Asset<Image>,
-    pub square_font_info: Asset<Image>,
+
+    panels: Vec<Box<dyn Panel>>,
 
     pub tileset: Asset<HashMap<char, Image>>,
     pub tile_size_px: Vector,
@@ -34,7 +35,7 @@ pub struct Player {
 }
 
 impl Player {
-    fn try_move(&mut self, translation: TilePos, map: &Map) -> bool {
+    pub fn try_move(&mut self, translation: TilePos, map: &Map) -> bool {
         let new_pos = TilePos {
             x: self.tile_pos.x + translation.x,
             y: self.tile_pos.y + translation.y,
@@ -73,7 +74,7 @@ pub struct CameraInfo {
 }
 
 impl CameraInfo {
-    fn translate(&mut self, translation: TilePos) {
+    pub fn translate(&mut self, translation: TilePos) {
         self.x_min += translation.x;
         self.x_max += translation.x;
         self.y_min += translation.y;
@@ -104,46 +105,33 @@ impl State for Game {
         make_new_game()
     }
 
+    // TODO: use panels (logic has been put in GamePanel)
     fn update(&mut self, window: &mut Window) -> QsResult<()> {
         update_game(self, window)
     }
 
+    // TODO: use panels (meaningful render has been put in GamePanel)
     fn draw(&mut self, window: &mut Window) -> QsResult<()> {
         crate::ui::render_game(self, window)
     }
 }
 
+pub const FONT_MONONOKI_PATH: &str = "fonts/mononoki/mononoki-Regular.ttf";
+pub const FONT_SQUARE_PATH: &str = "fonts/square/square.ttf";
+
 fn make_new_game() -> QsResult<Game> {
-    let font_mononoki = "fonts/mononoki/mononoki-Regular.ttf";
-    let font_square = "fonts/square/square.ttf";
-
-    let title = Asset::new(Font::load(font_mononoki).and_then(|font| font.render("Palladium", &FontStyle::new(72.0, Color::BLACK))));
-
-    let mononoki_font_info = Asset::new(Font::load(font_mononoki).and_then(|font| {
-        font.render(
-            "Mononoki font by Matthias Tellen, terms: SIL Open Font License 1.1",
-            &FontStyle::new(20.0, Color::BLACK),
-        )
-    }));
-    let square_font_info = Asset::new(Font::load(font_square).and_then(|font| {
-        font.render(
-            "Square font by wouter van oortmerssen, terms: CC BY 3.0",
-            &FontStyle::new(20.0, Color::BLACK),
-        )
-    }));
-
     // TODO: autogen this list somehow
     let game_glyphs = "* █d@";
 
     let tile_size_px = Vector::new(20, 20);
 
-    let controls_image = Asset::new(Font::load(font_square).and_then(move |font| {
+    let controls_image = Asset::new(Font::load(FONT_SQUARE_PATH).and_then(move |font| {
         let controls = vec!["Quit", "Controls", "Map"];
 
         font.render(&(controls.join("\n")), &FontStyle::new(12.0, Color::BLACK))
     }));
 
-    let tileset = Asset::new(Font::load(font_square).and_then(move |text| {
+    let tileset = Asset::new(Font::load(FONT_SQUARE_PATH).and_then(move |text| {
         let tiles = text
             .render(game_glyphs, &FontStyle::new(tile_size_px.y, Color::WHITE))
             .expect("Could not render the font tileset");
@@ -178,9 +166,6 @@ fn make_new_game() -> QsResult<Game> {
     };
 
     Ok(Game {
-        title,
-        mononoki_font_info,
-        square_font_info,
         controls_pane: ControlsPane {
             controls_image,
             show_controls_image: true,
@@ -189,6 +174,7 @@ fn make_new_game() -> QsResult<Game> {
         camera,
         map,
         player,
+        panels: Vec::new(),
 
         tile_size_px,
         tileset,
@@ -196,6 +182,7 @@ fn make_new_game() -> QsResult<Game> {
 }
 
 fn update_game(game: &mut Game, window: &mut Window) -> QsResult<()> {
+    // has been copied into GamePanel
     let map = &mut game.map;
     let player = &mut game.player;
     let camera = &mut game.camera;
@@ -227,7 +214,7 @@ fn update_game(game: &mut Game, window: &mut Window) -> QsResult<()> {
             let can_move = player.try_move(player_move, map);
             if can_move {
                 camera.translate(player_move);
-                crate::ui::visibility::refresh_visibility(player.tile_pos, map, 1000);
+                refresh_visibility(player.tile_pos, map, 1000);
             }
         }
 
@@ -235,4 +222,22 @@ fn update_game(game: &mut Game, window: &mut Window) -> QsResult<()> {
     })?;
 
     Ok(())
+}
+
+fn make_mononoki_font_image() -> Asset<Image> {
+    Asset::new(Font::load(FONT_MONONOKI_PATH).and_then(|font| {
+        font.render(
+            "Mononoki font by Matthias Tellen, terms: SIL Open Font License 1.1",
+            &FontStyle::new(20.0, Color::BLACK),
+        )
+    }))
+}
+
+fn make_square_font_image() -> Asset<Image> {
+    Asset::new(Font::load(FONT_SQUARE_PATH).and_then(|font| {
+        font.render(
+            "Square font by wouter van oortmerssen, terms: CC BY 3.0",
+            &FontStyle::new(20.0, Color::BLACK),
+        )
+    }))
 }

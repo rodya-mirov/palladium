@@ -2,9 +2,9 @@
 //! shamelessly taken from http://journal.stuffwithstuff.com/2015/09/07/what-the-hero-sees/
 //! which is a completely wonderful article
 
-use super::*;
-
+use crate::maps::{Map, Square, SquareType, VisibilityType};
 use crate::numerics::Float;
+use crate::state::TilePos;
 
 fn can_see_through(square: Square) -> bool {
     match square.square_type {
