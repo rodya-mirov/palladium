@@ -7,6 +7,7 @@ mod maps;
 mod numerics;
 mod rng;
 mod skills;
+mod state;
 mod ui;
 
 use quicksilver::{
@@ -20,5 +21,5 @@ fn main() {
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         ..Default::default()
     };
-    run::<ui::Game>("Palladium", Vector::new(800, 600), settings);
+    run::<state::Game>("Palladium", Vector::new(800, 600), settings);
 }
