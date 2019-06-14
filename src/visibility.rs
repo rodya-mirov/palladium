@@ -38,12 +38,6 @@ struct ShadowLine {
     shadows: Vec<Shadow>,
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
-enum Visible {
-    IsVisible,
-    IsNotVisible,
-}
-
 impl ShadowLine {
     fn is_in_shadow(&self, projection: Shadow) -> bool {
         self.shadows.iter().any(|shadow| shadow.contains(projection))
