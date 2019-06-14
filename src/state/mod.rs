@@ -107,7 +107,24 @@ impl State for Game {
 
     // TODO: use panels (logic has been put in GamePanel)
     fn update(&mut self, window: &mut Window) -> QsResult<()> {
-        update_game(self, window)
+        if self.panels.is_empty() {
+            window.close();
+        }
+
+        let mut actual_panels = std::mem::replace(&mut self.panels, Vec::new());
+        let last_ind = actual_panels.len() - 1;
+        for (i, panel) in actual_panels.iter_mut().enumerate() {
+            // TODO: if there's an error this will leave all the panels dead, which will be bad
+            panel.update_self(self, i == last_ind)?;
+        }
+        actual_panels.get_mut(last_ind).unwrap().do_key_input(self, window.keyboard())?;
+
+        while !actual_panels.is_empty() && actual_panels.get(actual_panels.len() - 1).unwrap().is_dead() {
+            actual_panels.pop();
+        }
+
+        std::mem::replace(&mut self.panels, actual_panels);
+        Ok(())
     }
 
     // TODO: use panels (meaningful render has been put in GamePanel)
@@ -174,7 +191,7 @@ fn make_new_game() -> QsResult<Game> {
         camera,
         map,
         player,
-        panels: Vec::new(),
+        panels: vec![Box::new(crate::panel::game_panel::GamePanel::new())],
 
         tile_size_px,
         tileset,

@@ -14,7 +14,7 @@ use quicksilver::lifecycle::Window;
 use crate::state::Game;
 use crate::QsResult;
 
-mod game_panel;
+pub mod game_panel;
 
 pub trait Panel {
     fn update_self(&mut self, game: &mut Game, is_active: bool) -> QsResult<()>;

@@ -17,7 +17,7 @@ pub struct GamePanel {
 }
 
 impl GamePanel {
-    fn new() -> GamePanel {
+    pub fn new() -> GamePanel {
         GamePanel { is_dead: false }
     }
 }
