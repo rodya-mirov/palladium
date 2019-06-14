@@ -4,7 +4,6 @@ use std::ops::Add;
 use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::{Color, Font, FontStyle, Image},
-    input::ButtonState,
     load_file,
     prelude::*,
     Future,
@@ -105,10 +104,10 @@ impl State for Game {
         make_new_game()
     }
 
-    // TODO: use panels (logic has been put in GamePanel)
     fn update(&mut self, window: &mut Window) -> QsResult<()> {
         if self.panels.is_empty() {
             window.close();
+            return Ok(());
         }
 
         let mut actual_panels = std::mem::replace(&mut self.panels, Vec::new());
@@ -117,9 +116,17 @@ impl State for Game {
             // TODO: if there's an error this will leave all the panels dead, which will be bad
             panel.update_self(self, i == last_ind)?;
         }
-        actual_panels.get_mut(last_ind).unwrap().do_key_input(self, window.keyboard())?;
+        actual_panels
+            .get_mut(last_ind)
+            .expect("This should always exist because the vec is nonempty")
+            .do_key_input(self, window.keyboard())?;
 
-        while !actual_panels.is_empty() && actual_panels.get(actual_panels.len() - 1).unwrap().is_dead() {
+        while !actual_panels.is_empty()
+            && actual_panels
+                .get(actual_panels.len() - 1)
+                .expect("Loop condition should guarantee this exists")
+                .is_dead()
+        {
             actual_panels.pop();
         }
 
@@ -127,9 +134,13 @@ impl State for Game {
         Ok(())
     }
 
-    // TODO: use panels (meaningful render has been put in GamePanel)
     fn draw(&mut self, window: &mut Window) -> QsResult<()> {
-        crate::ui::render_game(self, window)
+        let mut actual_panels = std::mem::replace(&mut self.panels, Vec::new());
+        for panel in actual_panels.iter_mut() {
+            panel.render_self(self, window)?;
+        }
+        std::mem::replace(&mut self.panels, actual_panels);
+        Ok(())
     }
 }
 
@@ -196,49 +207,6 @@ fn make_new_game() -> QsResult<Game> {
         tile_size_px,
         tileset,
     })
-}
-
-fn update_game(game: &mut Game, window: &mut Window) -> QsResult<()> {
-    // has been copied into GamePanel
-    let map = &mut game.map;
-    let player = &mut game.player;
-    let camera = &mut game.camera;
-    let keyboard = window.keyboard();
-
-    if keyboard[Key::C] == ButtonState::Pressed {
-        game.controls_pane.show_controls_image = !game.controls_pane.show_controls_image;
-    }
-
-    if keyboard[Key::Q] == ButtonState::Pressed {
-        window.close();
-        return Ok(());
-    }
-
-    map.execute(|map| {
-        let player_move = if keyboard[Key::Left] == ButtonState::Pressed {
-            Some(TilePos { x: -1, y: 0 })
-        } else if keyboard[Key::Up] == ButtonState::Pressed {
-            Some(TilePos { x: 0, y: -1 })
-        } else if keyboard[Key::Down] == ButtonState::Pressed {
-            Some(TilePos { x: 0, y: 1 })
-        } else if keyboard[Key::Right] == ButtonState::Pressed {
-            Some(TilePos { x: 1, y: 0 })
-        } else {
-            None
-        };
-
-        if let Some(player_move) = player_move {
-            let can_move = player.try_move(player_move, map);
-            if can_move {
-                camera.translate(player_move);
-                refresh_visibility(player.tile_pos, map, 1000);
-            }
-        }
-
-        Ok(())
-    })?;
-
-    Ok(())
 }
 
 fn make_mononoki_font_image() -> Asset<Image> {
