@@ -7,31 +7,33 @@ use quicksilver::lifecycle::Window;
 use crate::state::{Game, TilePos};
 use crate::ui::render_game;
 use crate::visibility::refresh_visibility;
-use crate::QsResult;
 
-use super::Panel;
+use super::{Panel, PanelAction, PanelResult};
 
-pub struct GamePanel {
-    // snip?
-    is_dead: bool,
-}
+pub struct GamePanel;
 
 impl GamePanel {
     pub fn new() -> GamePanel {
-        GamePanel { is_dead: false }
+        GamePanel
     }
 }
 
 impl Panel for GamePanel {
-    fn update_self(&mut self, _game: &mut Game, _is_active: bool) -> QsResult<()> {
-        Ok(())
+    fn update_self(&mut self, _game: &mut Game, _is_active: bool) -> PanelResult {
+        Ok(Vec::new())
     }
 
-    fn render_self(&mut self, game: &mut Game, window: &mut Window) -> QsResult<()> {
-        render_game(game, window)
+    fn render_self(&mut self, game: &mut Game, window: &mut Window) -> PanelResult {
+        render_game(game, window)?;
+        Ok(Vec::new())
     }
 
-    fn do_key_input(&mut self, game: &mut Game, keyboard: &Keyboard) -> QsResult<()> {
+    fn do_key_input(&mut self, game: &mut Game, keyboard: &Keyboard) -> PanelResult {
+        if game.is_quit {
+            return Ok(vec![PanelAction::CloseCurrentPanel]);
+        }
+        let mut actions = Vec::new();
+
         let map = &mut game.map;
         let player = &mut game.player;
         let camera = &mut game.camera;
@@ -41,8 +43,13 @@ impl Panel for GamePanel {
         }
 
         if keyboard[Key::Q] == ButtonState::Pressed {
-            self.is_dead = true;
-            return Ok(());
+            use super::quit_panel::make_quit_panel;
+            actions.push(PanelAction::AddPanelAbove(Box::new(make_quit_panel())));
+        }
+
+        if keyboard[Key::L] == ButtonState::Pressed {
+            use super::license_panel::make_license_panel;
+            actions.push(PanelAction::AddPanelAbove(Box::new(make_license_panel())));
         }
 
         map.execute(|map| {
@@ -69,10 +76,6 @@ impl Panel for GamePanel {
             Ok(())
         })?;
 
-        Ok(())
-    }
-
-    fn is_dead(&self) -> bool {
-        self.is_dead
+        Ok(actions)
     }
 }

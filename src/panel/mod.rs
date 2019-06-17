@@ -15,10 +15,20 @@ use crate::state::Game;
 use crate::QsResult;
 
 pub mod game_panel;
+pub mod license_panel;
+pub mod menu_panel;
+pub mod quit_panel;
+
+pub type PanelResult = QsResult<Vec<PanelAction>>;
+
+pub enum PanelAction {
+    AddPanelAbove(Box<dyn Panel>),
+    AddPanelBehind(Box<dyn Panel>),
+    CloseCurrentPanel,
+}
 
 pub trait Panel {
-    fn update_self(&mut self, game: &mut Game, is_active: bool) -> QsResult<()>;
-    fn render_self(&mut self, game: &mut Game, window: &mut Window) -> QsResult<()>;
-    fn do_key_input(&mut self, game: &mut Game, keyboard: &Keyboard) -> QsResult<()>;
-    fn is_dead(&self) -> bool;
+    fn update_self(&mut self, game: &mut Game, is_active: bool) -> PanelResult;
+    fn render_self(&mut self, game: &mut Game, window: &mut Window) -> PanelResult;
+    fn do_key_input(&mut self, game: &mut Game, keyboard: &Keyboard) -> PanelResult;
 }
