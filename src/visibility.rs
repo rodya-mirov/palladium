@@ -9,9 +9,11 @@ use crate::state::TilePos;
 fn can_see_through(square: Square) -> bool {
     match square.square_type {
         SquareType::Floor => true,
+        SquareType::Rubbish => true,
 
         SquareType::Door => false,
         SquareType::Wall => false,
+        SquareType::Pillar => false,
 
         // These are perhaps debatable, but they should never be visible anyway
         // so shouldn't matter

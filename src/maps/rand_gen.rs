@@ -115,6 +115,8 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
     let open = make_unseen_square(SquareType::Open);
     let floor = make_unseen_square(SquareType::Floor);
     let wall = make_unseen_square(SquareType::Wall);
+    let rubbish = make_unseen_square(SquareType::Rubbish);
+    let pillar = make_unseen_square(SquareType::Pillar);
 
     let width = params.map_dimensions.map_width;
     let height = params.map_dimensions.map_height;
@@ -155,7 +157,15 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
 
         for x in (room.left + 1)..room.right {
             for y in (room.top + 1)..room.bottom {
-                map.set_square(x, y, floor).expect("Indices should be valid");
+                let next_perc = rng.gen_range(1, 101); // 1 to 100
+                let next_square = if next_perc <= 5 {
+                    rubbish
+                } else if next_perc <= 10 {
+                    pillar
+                } else {
+                    floor
+                };
+                map.set_square(x, y, next_square).expect("Indices should be valid");
             }
         }
     }

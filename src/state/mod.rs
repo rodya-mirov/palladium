@@ -47,6 +47,8 @@ impl Player {
             SquareType::Void => false,
             SquareType::Wall => false,
             SquareType::Open => false,
+            SquareType::Rubbish => false,
+            SquareType::Pillar => false,
 
             SquareType::Floor => true,
             SquareType::Door => true,
@@ -195,7 +197,7 @@ pub const FONT_SQUARE_PATH: &str = "fonts/square/square.ttf";
 
 fn make_new_game() -> QsResult<Game> {
     // TODO: autogen this list somehow
-    let game_glyphs = "* █d@";
+    let game_glyphs = "* █d@I`";
 
     let tile_size_px = Vector::new(20, 20);
 

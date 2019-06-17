@@ -27,7 +27,9 @@ pub enum SquareType {
     Open, // not allocated to anything (should not be accessible to the player)
     Floor,
     Wall,
-    Door,
+    Door,    // can walk, can't see through
+    Rubbish, // can't walk, can see through
+    Pillar,  // can't walk, can't see through
 }
 
 impl Square {
@@ -38,6 +40,8 @@ impl Square {
             SquareType::Floor => ' ',
             SquareType::Wall => '█',
             SquareType::Door => 'd',
+            SquareType::Rubbish => '`',
+            SquareType::Pillar => 'I',
         }
     }
 }
