@@ -11,6 +11,7 @@ mod skills;
 mod state;
 mod ui;
 mod visibility;
+mod world;
 
 use quicksilver::{
     geom::Vector,

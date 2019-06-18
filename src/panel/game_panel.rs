@@ -4,9 +4,10 @@
 use quicksilver::input::{ButtonState, Key, Keyboard};
 use quicksilver::lifecycle::Window;
 
-use crate::state::{Game, TilePos};
+use crate::state::Game;
 use crate::ui::render_game;
 use crate::visibility::refresh_visibility;
+use crate::world::TilePos;
 
 use super::{Panel, PanelAction, PanelResult};
 
@@ -34,10 +35,6 @@ impl Panel for GamePanel {
         }
         let mut actions = Vec::new();
 
-        let map = &mut game.map;
-        let player = &mut game.player;
-        let camera = &mut game.camera;
-
         if keyboard[Key::C] == ButtonState::Pressed {
             game.controls_pane.show_controls_image = !game.controls_pane.show_controls_image;
         }
@@ -52,7 +49,11 @@ impl Panel for GamePanel {
             actions.push(PanelAction::AddPanelAbove(Box::new(make_license_panel())));
         }
 
-        map.execute(|map| {
+        game.world.execute(|world| {
+            let map = &mut world.map;
+            let player = &mut world.player;
+            let camera = &mut world.camera;
+
             let player_move = if keyboard[Key::Left] == ButtonState::Pressed {
                 Some(TilePos { x: -1, y: 0 })
             } else if keyboard[Key::Up] == ButtonState::Pressed {

@@ -55,16 +55,19 @@ fn render_controls_image(game: &mut Game, window: &mut Window) -> QsResult<()> {
 fn render_map(offset_px: Vector, game: &mut Game, window: &mut Window) -> QsResult<()> {
     let tile_size_px = game.tile_size_px;
 
-    let (tileset, map, camera, player) = (&mut game.tileset, &mut game.map, &game.camera, &game.player);
-
-    let x_min = camera.x_min;
-    let x_max = camera.x_max;
-
-    let y_min = camera.y_min;
-    let y_max = camera.y_max;
+    let world = &mut game.world;
+    let tileset = &mut game.tileset;
 
     tileset.execute(|tileset| {
-        map.execute(|map| {
+        world.execute(|world| {
+            let (map, camera, player) = (&mut world.map, &world.camera, &world.player);
+
+            let x_min = camera.x_min;
+            let x_max = camera.x_max;
+
+            let y_min = camera.y_min;
+            let y_max = camera.y_max;
+
             for x in x_min..=x_max {
                 for y in y_min..=y_max {
                     let square = map.get_square(x, y);

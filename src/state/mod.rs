@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::ops::Add;
 
 use quicksilver::{
     geom::{Rectangle, Vector},
@@ -9,17 +8,13 @@ use quicksilver::{
     Future,
 };
 
-use crate::maps::{Map, SquareType};
+use crate::maps::Map;
 use crate::panel::{Panel, PanelAction};
-use crate::visibility::refresh_visibility;
+use crate::world::World;
 use crate::QsResult;
 
 pub struct Game {
-    pub map: Asset<Map>,
-
-    pub camera: CameraInfo,
-
-    pub player: Player,
+    pub world: Asset<World>,
 
     pub controls_pane: ControlsPane,
 
@@ -31,75 +26,9 @@ pub struct Game {
     pub tile_size_px: Vector,
 }
 
-pub struct Player {
-    pub tile_pos: TilePos,
-}
-
-impl Player {
-    pub fn try_move(&mut self, translation: TilePos, map: &Map) -> bool {
-        let new_pos = TilePos {
-            x: self.tile_pos.x + translation.x,
-            y: self.tile_pos.y + translation.y,
-        };
-        let to_move_to = map.get_square(new_pos.x, new_pos.y);
-
-        let can_move = match to_move_to.square_type {
-            SquareType::Void => false,
-            SquareType::Wall => false,
-            SquareType::Open => false,
-            SquareType::Rubbish => false,
-            SquareType::Pillar => false,
-
-            SquareType::Floor => true,
-            SquareType::Door => true,
-        };
-
-        if can_move {
-            self.tile_pos = new_pos;
-        }
-
-        can_move
-    }
-}
-
 pub struct ControlsPane {
     pub controls_image: Asset<Image>,
     pub show_controls_image: bool,
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct CameraInfo {
-    pub x_min: i32,
-    pub x_max: i32,
-
-    pub y_min: i32,
-    pub y_max: i32,
-}
-
-impl CameraInfo {
-    pub fn translate(&mut self, translation: TilePos) {
-        self.x_min += translation.x;
-        self.x_max += translation.x;
-        self.y_min += translation.y;
-        self.y_max += translation.y;
-    }
-}
-
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct TilePos {
-    pub x: i32,
-    pub y: i32,
-}
-
-impl Add<TilePos> for TilePos {
-    type Output = TilePos;
-
-    fn add(self, rhs: TilePos) -> TilePos {
-        TilePos {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
 }
 
 impl Game {
@@ -221,25 +150,12 @@ fn make_new_game() -> QsResult<Game> {
         Ok(tileset)
     }));
 
-    // TODO: make this square guaranteed to not be empty
-    let player_pos = TilePos { x: 15, y: 15 };
-
-    let player = Player { tile_pos: player_pos };
-
-    let map: Asset<Map> = Asset::new(load_file("config/map_params.ron").and_then(move |bytes| {
+    let world: Asset<World> = Asset::new(load_file("config/map_params.ron").and_then(move |bytes| {
         let map_gen_params = ron::de::from_bytes(&bytes).expect("Should deserialize");
-        let mut map: Map = Map::make_random(&map_gen_params);
-        refresh_visibility(player_pos, &mut map, 1000); // TODO: vis range
-        Ok(map)
+        let map = Map::make_random(&map_gen_params);
+        let world = World::new(map);
+        Ok(world)
     }));
-
-    let camera = CameraInfo {
-        x_min: 0,
-        x_max: 30,
-
-        y_min: 0,
-        y_max: 30,
-    };
 
     Ok(Game {
         controls_pane: ControlsPane {
@@ -247,9 +163,8 @@ fn make_new_game() -> QsResult<Game> {
             show_controls_image: true,
         },
 
-        camera,
-        map,
-        player,
+        world,
+
         is_quit: false,
         panels: vec![Box::new(crate::panel::game_panel::GamePanel::new())],
 

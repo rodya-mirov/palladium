@@ -4,7 +4,7 @@
 
 use crate::maps::{Map, Square, SquareType, VisibilityType};
 use crate::numerics::Float;
-use crate::state::TilePos;
+use crate::world::TilePos;
 
 fn can_see_through(square: Square) -> bool {
     match square.square_type {
