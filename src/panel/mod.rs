@@ -8,16 +8,20 @@
 //!     - From top to bottom, each panel is asked if it is dead; if so, it is removed
 //!         If a non-dead panel is found, the loop stops
 
+use super::*;
+
 use quicksilver::input::Keyboard;
 use quicksilver::lifecycle::Window;
 
-use crate::state::Game;
+use specs::World;
+
 use crate::QsResult;
 
-pub mod game_panel;
-pub mod license_panel;
-pub mod menu_panel;
-pub mod quit_panel;
+mod game_panel;
+mod menu_panel;
+
+pub use game_panel::{GameIsQuit, GameMapDisplayOptions, GameMapRenderParams, GamePanel};
+pub use menu_panel::{make_license_panel, make_quit_panel};
 
 pub type PanelResult = QsResult<Vec<PanelAction>>;
 
@@ -28,7 +32,7 @@ pub enum PanelAction {
 }
 
 pub trait Panel {
-    fn update_self(&mut self, game: &mut Game, is_active: bool) -> PanelResult;
-    fn render_self(&mut self, game: &mut Game, window: &mut Window) -> PanelResult;
-    fn do_key_input(&mut self, game: &mut Game, keyboard: &Keyboard) -> PanelResult;
+    fn update_self(&mut self, world: &mut World, is_active: bool) -> PanelResult;
+    fn render_self(&mut self, world: &mut World, window: &mut Window) -> PanelResult;
+    fn do_key_input(&mut self, world: &mut World, keyboard: &Keyboard) -> PanelResult;
 }

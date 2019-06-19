@@ -1,4 +1,3 @@
-use super::menu_panel::*;
 use quicksilver::prelude::*;
 
 use super::*;
@@ -15,7 +14,7 @@ pub fn make_license_panel() -> impl Panel {
 
     MenuPanelBuilder::new(
         text,
-        crate::state::FONT_MONONOKI_PATH,
+        crate::game_state::FONT_MONONOKI_PATH,
         20.,
         Color::WHITE,
         Color {

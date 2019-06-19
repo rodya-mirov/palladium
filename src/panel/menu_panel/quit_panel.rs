@@ -1,7 +1,6 @@
-use super::menu_panel::*;
-use quicksilver::prelude::*;
-
 use super::*;
+
+use specs::RunNow;
 
 pub fn make_quit_panel() -> impl Panel {
     let text = ["Quit game?", "Your progress will not be saved!"]
@@ -12,7 +11,7 @@ pub fn make_quit_panel() -> impl Panel {
 
     MenuPanelBuilder::new(
         text,
-        crate::state::FONT_MONONOKI_PATH,
+        crate::game_state::FONT_MONONOKI_PATH,
         20.,
         Color::WHITE,
         Color {
@@ -22,9 +21,10 @@ pub fn make_quit_panel() -> impl Panel {
             a: 1.,
         },
     )
-    .with_option("[Cancel]".to_string(), |_game: &mut Game| vec![PanelAction::CloseCurrentPanel])
-    .with_option("[Quit]".to_string(), |game| {
-        game.quit();
+    .with_option("[Cancel]".to_string(), |_world: &mut World| vec![PanelAction::CloseCurrentPanel])
+    .with_option("[Quit]".to_string(), |world| {
+        systems::QuitSystem {}.run_now(&mut world.res);
+
         vec![PanelAction::CloseCurrentPanel]
     })
     .build(Vector::new(50., 50.))

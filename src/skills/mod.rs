@@ -1,3 +1,6 @@
+//! TODO: plug in skills at some point
+#![allow(dead_code)]
+
 use std::collections::HashMap;
 
 use serde::Deserialize;

@@ -1,28 +1,27 @@
-#![allow(clippy::needless_range_loop)] // I'll decide which one is more readable
-#![allow(clippy::collapsible_if)] // I like it this way sometimes, for symmetry
-#![deny(clippy::print_stdout)] // For real though, print! will crash the wasm build
-#![allow(dead_code)] // TODO: delete this
+#[macro_use]
+extern crate specs_derive;
 
-mod maps;
+use specs::Component;
+
+use quicksilver::{
+    geom::Vector,
+    lifecycle::{run, Asset, Settings},
+    Result as QsResult,
+};
+
+mod components;
+mod game_state;
 mod numerics;
 mod panel;
 mod rng;
 mod skills;
-mod state;
-mod ui;
-mod visibility;
+mod systems;
 mod world;
-
-use quicksilver::{
-    geom::Vector,
-    lifecycle::{run, Settings},
-    Result as QsResult,
-};
 
 fn main() {
     let settings = Settings {
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         ..Default::default()
     };
-    run::<state::Game>("Palladium", Vector::new(800, 600), settings);
+    run::<game_state::MainState>("Palladium", Vector::new(800, 600), settings);
 }

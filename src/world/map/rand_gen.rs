@@ -15,13 +15,6 @@ struct Room {
 struct Door {
     x: usize,
     y: usize,
-    orientation: Orientation,
-}
-
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
-enum Orientation {
-    Vertical,
-    Horizontal,
 }
 
 impl Room {
@@ -44,11 +37,7 @@ impl Room {
             } else {
                 let x = if self.left == other.right { self.left } else { self.right };
                 let y = rng.gen_range(y_min, y_max + 1);
-                Some(Door {
-                    x,
-                    y,
-                    orientation: Orientation::Horizontal,
-                })
+                Some(Door { x, y })
             }
         } else if self.top == other.bottom || self.bottom == other.top {
             let x_min = max(self.left + 1, other.left + 1);
@@ -59,11 +48,7 @@ impl Room {
             } else {
                 let x = rng.gen_range(x_min, x_max + 1);
                 let y = if self.top == other.bottom { self.top } else { self.bottom };
-                Some(Door {
-                    x,
-                    y,
-                    orientation: Orientation::Vertical,
-                })
+                Some(Door { x, y })
             }
         } else {
             None
@@ -111,12 +96,47 @@ fn make_random_rooms(params: &MapGenerationParams, rng: &mut PalladRng) -> Vec<R
     rooms
 }
 
-pub fn rand_gen(params: &MapGenerationParams) -> Map {
-    let open = make_unseen_square(SquareType::Open);
-    let floor = make_unseen_square(SquareType::Floor);
-    let wall = make_unseen_square(SquareType::Wall);
-    let rubbish = make_unseen_square(SquareType::Rubbish);
-    let pillar = make_unseen_square(SquareType::Pillar);
+fn make_raw_square(square_type: SquareType) -> Square {
+    Square { square_type }
+}
+
+pub struct MapGenResult {
+    pub width: usize,
+    pub height: usize,
+    // cells is row-by-row (C-indexed) for cells[x,y] is cells[y * width + x]
+    pub cells: Vec<Square>,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub struct Square {
+    pub square_type: SquareType,
+}
+
+impl MapGenResult {
+    fn index(&self, x: usize, y: usize) -> usize {
+        if x >= self.width || y >= self.height {
+            panic!(
+                "MapGen: Invalid x/y: x: {}, y: {}, width: {}, height: {}",
+                x, y, self.width, self.height
+            );
+        }
+
+        x + y * self.width
+    }
+
+    fn set_square(&mut self, x: usize, y: usize, square: Square) {
+        let ind = self.index(x, y);
+        self.cells[ind] = square;
+    }
+}
+
+pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
+    let open = make_raw_square(SquareType::Open);
+    let floor = make_raw_square(SquareType::Floor);
+    let wall = make_raw_square(SquareType::Wall);
+    let rubbish = make_raw_square(SquareType::Rubbish);
+    let pillar = make_raw_square(SquareType::Pillar);
+    let door = make_raw_square(SquareType::Door);
 
     let width = params.map_dimensions.map_width;
     let height = params.map_dimensions.map_height;
@@ -128,16 +148,16 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
         cells.push(open);
     }
 
-    let mut map = Map { width, height, cells };
+    let mut map = MapGenResult { width, height, cells };
 
     for x in 0..width {
-        map.set_square(x, 0, wall).expect("Indices should be valid");
-        map.set_square(x, height - 1, wall).expect("Indices should be valid");
+        map.set_square(x, 0, wall);
+        map.set_square(x, height - 1, wall);
     }
 
     for y in 0..height {
-        map.set_square(0, y, wall).expect("Indices should be valid");
-        map.set_square(width - 1, y, wall).expect("Indices should be valid");
+        map.set_square(0, y, wall);
+        map.set_square(width - 1, y, wall);
     }
 
     let mut rng = make_rng(seed);
@@ -146,13 +166,13 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
 
     for room in &rooms {
         for x in room.left..=room.right {
-            map.set_square(x, room.top, wall).expect("Indices should be valid");
-            map.set_square(x, room.bottom, wall).expect("Indices should be valid");
+            map.set_square(x, room.top, wall);
+            map.set_square(x, room.bottom, wall);
         }
 
         for y in room.top..=room.bottom {
-            map.set_square(room.left, y, wall).expect("Indices should be valid");
-            map.set_square(room.right, y, wall).expect("Indices should be valid");
+            map.set_square(room.left, y, wall);
+            map.set_square(room.right, y, wall);
         }
 
         for x in (room.left + 1)..room.right {
@@ -165,7 +185,7 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
                 } else {
                     floor
                 };
-                map.set_square(x, y, next_square).expect("Indices should be valid");
+                map.set_square(x, y, next_square);
             }
         }
     }
@@ -177,9 +197,8 @@ pub fn rand_gen(params: &MapGenerationParams) -> Map {
         for j in i + 1..num_rooms {
             let b = rooms[j];
 
-            if let Some(door) = a.try_make_door(&b, &mut rng) {
-                let square = make_unseen_square(SquareType::Door);
-                map.set_square(door.x, door.y, square).expect("Indices should be valid");
+            if let Some(door_val) = a.try_make_door(&b, &mut rng) {
+                map.set_square(door_val.x, door_val.y, door);
             }
         }
     }
