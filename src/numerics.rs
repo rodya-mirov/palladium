@@ -30,3 +30,16 @@ impl From<f32> for Float {
         Float::make_unchecked(val)
     }
 }
+
+#[allow(clippy::if_same_then_else)]
+pub fn force_max(a: f32, b: f32) -> f32 {
+    if a.is_nan() {
+        b
+    } else if b.is_nan() {
+        a
+    } else if a > b {
+        a
+    } else {
+        b
+    }
+}

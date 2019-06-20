@@ -7,7 +7,7 @@ pub fn make_license_panel() -> impl Panel {
         "Mononoki font by Matthias Tellen, terms: Open Font License 1.1",
         "Square font by Wouter Van Oortmerssen, terms: CC BY 3.0",
     ]
-    .into_iter()
+    .iter()
     .map(|s| s.to_string())
     .collect::<Vec<String>>()
     .join("\n");

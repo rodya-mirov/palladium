@@ -40,7 +40,7 @@ impl<'a> System<'a> for VisibilitySystem {
             // Note we mark everything as hidden right at the start, so we can do
             // early stopping later
             cannot_see(vis);
-            visibles.entry(pos.position).or_insert(Vec::with_capacity(1)).push(vis);
+            visibles.entry(pos.position).or_insert_with(|| Vec::with_capacity(1)).push(vis);
         }
 
         // NB: this range is worst case, but if we hit full shadow, we can stop early

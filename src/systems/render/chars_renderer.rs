@@ -53,7 +53,7 @@ impl<'a, 'b> System<'a> for CharsRenderer<'b> {
 
                 let camera_bounds = (&pos, &camera)
                     .join()
-                    .map(|(pos, camera)| get_camera_bounds(pos, camera))
+                    .map(|(&pos, &camera)| get_camera_bounds(pos, camera))
                     .next()
                     .expect("Camera should be defined");
 
@@ -66,7 +66,7 @@ impl<'a, 'b> System<'a> for CharsRenderer<'b> {
                             let render_pos = get_render_pos(x, y, camera_bounds, *render_params);
                             let image = tileset
                                 .get(&glyph_comp.glyph)
-                                .expect(&format!("Glyph {} should be defined in the tileset", glyph_comp.glyph));
+                                .unwrap_or_else(|| panic!("Glyph {} should be defined in the tileset", glyph_comp.glyph));
 
                             let rect = Rectangle::new(render_pos, image.area().size());
 
@@ -110,7 +110,7 @@ impl CameraBounds {
     }
 }
 
-fn get_camera_bounds(pos: &HasPosition, cam: &Camera) -> CameraBounds {
+fn get_camera_bounds(pos: HasPosition, cam: Camera) -> CameraBounds {
     CameraBounds {
         x_min: pos.position.x - cam.x_rad as i32,
         y_min: pos.position.y - cam.y_rad as i32,

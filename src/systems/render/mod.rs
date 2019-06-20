@@ -43,15 +43,3 @@ fn get_render_pos_corner(screen_size: Vector, image_size: Vector, offset: Vector
         Corner::LowerRight => Vector::new(screen_size.x - image_size.x - offset.x, screen_size.y - image_size.y - offset.y),
     }
 }
-
-fn force_max(a: f32, b: f32) -> f32 {
-    if a.is_nan() {
-        b
-    } else if b.is_nan() {
-        a
-    } else if a > b {
-        a
-    } else {
-        b
-    }
-}

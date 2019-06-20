@@ -25,7 +25,7 @@ pub struct TilePos {
 }
 
 impl TilePos {
-    pub fn manhattan_distance(&self, other: TilePos) -> i32 {
+    pub fn manhattan_distance(self, other: TilePos) -> i32 {
         max((self.x - other.x).abs(), (self.y - other.y).abs())
     }
 }

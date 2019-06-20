@@ -16,18 +16,6 @@ mod quit_panel;
 pub use license_panel::make_license_panel;
 pub use quit_panel::make_quit_panel;
 
-fn force_max(a: f32, b: f32) -> f32 {
-    if a.is_nan() {
-        b
-    } else if b.is_nan() {
-        a
-    } else if a > b {
-        a
-    } else {
-        b
-    }
-}
-
 pub type MenuCallback = FnMut(&mut World) -> Vec<PanelAction>;
 
 pub struct MenuPanel {
@@ -162,7 +150,7 @@ impl Panel for MenuPanel {
             outside_padding: Vector::new(50, 50),
             internal_padding: Vector::new(20, 20),
         }
-        .run_now(&mut world.res);
+        .run_now(&world.res);
 
         Ok(Vec::new())
     }

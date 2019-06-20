@@ -4,7 +4,7 @@ use specs::RunNow;
 
 pub fn make_quit_panel() -> impl Panel {
     let text = ["Quit game?", "Your progress will not be saved!"]
-        .into_iter()
+        .iter()
         .map(|s| s.to_string())
         .collect::<Vec<String>>()
         .join("\n");
@@ -23,7 +23,7 @@ pub fn make_quit_panel() -> impl Panel {
     )
     .with_option("[Cancel]".to_string(), |_world: &mut World| vec![PanelAction::CloseCurrentPanel])
     .with_option("[Quit]".to_string(), |world| {
-        systems::QuitSystem {}.run_now(&mut world.res);
+        systems::QuitSystem {}.run_now(&world.res);
 
         vec![PanelAction::CloseCurrentPanel]
     })

@@ -189,7 +189,7 @@ impl Map {
         }
 
         let index = self.get_index(x, y);
-        self.tiles.get(index).map(|&entity| entity)
+        self.tiles.get(index).cloned()
     }
 
     fn get_index(&self, x: i32, y: i32) -> usize {

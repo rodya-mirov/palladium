@@ -194,7 +194,7 @@ impl Panel for GamePanel {
             return Ok(Vec::new());
         }
 
-        self.update_dispatcher.dispatch_seq(&mut world.res);
+        self.update_dispatcher.dispatch_seq(&world.res);
 
         let is_quit = world.read_resource::<GameIsQuit>().0;
         if is_quit {
@@ -212,7 +212,7 @@ impl Panel for GamePanel {
         let bg_color = Color::from_hex("556887");
         window.clear(bg_color)?;
 
-        self.render_dispatcher.run_now(&mut world.res);
+        self.render_dispatcher.run_now(&world.res);
 
         // Because of borrow lifetimes, these systems can't persist
         // so we just call em manually, it works great
@@ -220,13 +220,13 @@ impl Panel for GamePanel {
             window,
             tileset: &mut self.tileset,
         }
-        .run_now(&mut world.res);
+        .run_now(&world.res);
 
         systems::ControlsRenderer {
             window,
             controls_image: &mut self.controls_image,
         }
-        .run_now(&mut world.res);
+        .run_now(&world.res);
 
         Ok(Vec::new())
     }
@@ -236,7 +236,7 @@ impl Panel for GamePanel {
             return Ok(Vec::new());
         }
 
-        self.input_dispatcher.dispatch_seq(&mut world.res);
+        self.input_dispatcher.dispatch_seq(&world.res);
 
         let mut actions = Vec::new();
         if keyboard[Key::Q] == ButtonState::Pressed {

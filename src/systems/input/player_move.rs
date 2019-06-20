@@ -9,6 +9,7 @@ use world::{TilePos, WorldState};
 pub struct PlayerMoveSystem;
 
 impl<'a> System<'a> for PlayerMoveSystem {
+    #[allow(clippy::type_complexity)] // more or less inevitable with specs, this is just how it works
     type SystemData = (
         ReadStorage<'a, Player>,
         WriteStorage<'a, HasPosition>,
@@ -62,11 +63,7 @@ fn non_tile_blocks<'a>(
     blocks: &ReadStorage<'a, BlocksMovement>,
     map_tiles: &ReadStorage<'a, MapTile>,
 ) -> bool {
-    (!map_tiles, blocks, has_pos)
-        .join()
-        .filter(|(_, _, pos)| pos.position == next_pos)
-        .next()
-        .is_some()
+    (!map_tiles, blocks, has_pos).join().any(|(_, _, pos)| pos.position == next_pos)
 }
 
 fn get_pos<'a, T: Component>(single_comp: &ReadStorage<'a, T>, has_pos: &WriteStorage<'a, HasPosition>) -> TilePos {

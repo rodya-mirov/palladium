@@ -1,3 +1,6 @@
+#![allow(clippy::collapsible_if)]
+#![allow(clippy::needless_range_loop)]
+
 #[macro_use]
 extern crate specs_derive;
 

@@ -1,6 +1,6 @@
 [package]
-name = "palladium_hx"
-version = "0.1.0"
+name = "palladium"
+version = "0.2.0"
 authors = ["Richard Rast <richard.rast@gmail.com>"]
 edition = "2018"
 

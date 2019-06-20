@@ -5,6 +5,8 @@ use quicksilver::{
     graphics::Image,
 };
 
+use numerics::force_max;
+
 pub struct CenteredVerticalImagesRenderer<'a> {
     pub window: &'a mut Window,
     pub images: &'a mut Vec<&'a mut Asset<Image>>,
