@@ -1,30 +1,31 @@
 //! System for managing the visibility of objects
-//! TODO: does not allow non-tiles to occlude
 //!
 //! Shamelessly taken from http://journal.stuffwithstuff.com/2015/09/07/what-the-hero-sees/
 //! which is a completely wonderful article
 
 use super::*;
 
-use specs::Join;
+use std::cmp::max;
+use std::collections::HashMap;
+
+use specs::prelude::*;
 
 use components::{HasPosition, Player, Visible};
 use numerics::Float;
-use world::{Map, TilePos, VisibilityType, WorldState};
+use world::{TilePos, VisibilityType};
 
 pub struct VisibilitySystem;
 
+// We do use a hashmap, but the early stopping rules
+// technically populating the hashmap doesn't seem ideal, but we can cache later (and really should)
+type Visibles<'a> = HashMap<TilePos, Vec<&'a mut Visible>>; // pos -> 1 or more entities at that position
+
 // TODO: caching; don't recompute unless somebody moves ... ?
 impl<'a> System<'a> for VisibilitySystem {
-    type SystemData = (
-        ReadStorage<'a, Player>,
-        ReadStorage<'a, HasPosition>,
-        WriteStorage<'a, Visible>,
-        ReadExpect<'a, WorldState>,
-    );
+    type SystemData = (ReadStorage<'a, Player>, ReadStorage<'a, HasPosition>, WriteStorage<'a, Visible>);
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player, has_pos, vis, world_state) = data;
+        let (player, has_pos, mut vis) = data;
 
         let player_pos: TilePos = (&player, &has_pos)
             .join()
@@ -32,63 +33,64 @@ impl<'a> System<'a> for VisibilitySystem {
             .next()
             .expect("Player should exist and have a position");
 
-        // TODO: this range is janky and random
-        let mut map_vis = MapVis {
-            map: &world_state.map,
-            vis,
+        let mut max_range = 1;
+        let mut visibles: Visibles = HashMap::new();
+        for (pos, vis) in (&has_pos, &mut vis).join() {
+            max_range = max(max_range, player_pos.manhattan_distance(pos.position));
+            // Note we mark everything as hidden right at the start, so we can do
+            // early stopping later
+            cannot_see(vis);
+            visibles.entry(pos.position).or_insert(Vec::with_capacity(1)).push(vis);
+        }
+
+        // NB: this range is worst case, but if we hit full shadow, we can stop early
+        refresh_visibility(player_pos, &mut visibles, max_range);
+    }
+}
+
+fn is_occluding<'a>(visibles: &mut Visibles<'a>, pos: TilePos) -> bool {
+    if let Some(stuff) = visibles.get(&pos) {
+        stuff.iter().any(|vis| vis.occludes)
+    } else {
+        false
+    }
+}
+
+fn mark_visible<'a>(visibles: &mut Visibles<'a>, pos: TilePos) {
+    if let Some(stuff) = visibles.get_mut(&pos) {
+        for mut thing in stuff {
+            thing.visibility = VisibilityType::CurrentlyVisible;
+        }
+    }
+}
+
+fn cannot_see(vis: &mut Visible) {
+    if vis.memorable {
+        vis.visibility = match vis.visibility {
+            VisibilityType::CurrentlyVisible => VisibilityType::Remembered,
+            VisibilityType::Remembered => VisibilityType::Remembered,
+            VisibilityType::NotSeen => VisibilityType::NotSeen,
         };
-        refresh_visibility(player_pos, &mut map_vis, 1000);
+    } else {
+        vis.visibility = VisibilityType::NotSeen;
     }
 }
 
-struct MapVis<'a, 'b> {
-    map: &'b Map,
-    vis: WriteStorage<'a, Visible>,
-}
-
-impl<'a, 'b> MapVis<'a, 'b> {
-    fn get_vis(&'a self, x: i32, y: i32) -> Option<Visible> {
-        if let Some(entity) = self.map.get_tile(TilePos { x, y }) {
-            self.vis.get(entity).map(|&vis| vis)
-        } else {
-            None
-        }
-    }
-
-    fn set_visible(&mut self, pos: TilePos, can_see: bool) {
-        if let Some(entity) = self.map.get_tile(pos) {
-            let mut curr = self.vis.get_mut(entity).expect("Tiles should have visibility");
-            curr.visibility = update_vis(curr.visibility, can_see);
-        }
-    }
-
-    fn is_occluding(&self, pos: TilePos) -> bool {
-        if let Some(vis) = self.get_vis(pos.x, pos.y) {
-            vis.occludes
-        } else {
-            // off the map is "occluding" I guess
-            true
-        }
-    }
-}
-
-fn refresh_visibility<'a, 'b>(observer_pos: TilePos, map_vis: &mut MapVis<'a, 'b>, vis_range: i32) {
-    if let Some(self_sq_vis) = map_vis.get_vis(observer_pos.x, observer_pos.y) {
-        let can_see_own_square = self_sq_vis.occludes;
-        map_vis.set_visible(observer_pos, can_see_own_square);
-    }
+fn refresh_visibility<'a>(observer_pos: TilePos, visibles: &mut Visibles<'a>, vis_range: i32) {
+    // You can always see yourself, it just helps sanity
+    mark_visible(visibles, observer_pos);
 
     for octant in 0..8 {
-        refresh_octant_vis(observer_pos, octant, map_vis, vis_range);
+        refresh_octant_vis(observer_pos, octant, visibles, vis_range);
     }
 }
 
-//  TODO: vis_range MUST include the entire map! Or we will never set the edge of vision to be invisible
-// in the case where you can no longer see something because it's just too far away
-fn refresh_octant_vis<'a, 'b>(observer_pos: TilePos, octant: usize, map_vis: &mut MapVis<'a, 'b>, vis_range: i32) {
+// NB: vis_range MUST include the entire map! Or we will never set the edge of vision to be invisible
+//      in the case where you can no longer see something because it's just too far away
+// PRE: all visibles have been marked "can't currently see"; so there is no need to mark things as invisible
+//      this helps with early stopping!!
+fn refresh_octant_vis<'a>(observer_pos: TilePos, octant: usize, visibles: &mut Visibles<'a>, vis_range: i32) {
     let mut line = ShadowLine::default();
-
-    let mut full_shadow = false;
 
     for row in 1..vis_range {
         let mut all_occluded = true;
@@ -96,28 +98,22 @@ fn refresh_octant_vis<'a, 'b>(observer_pos: TilePos, octant: usize, map_vis: &mu
         for col in 0..=row {
             let pos = observer_pos + transform_octant(row, col, octant);
 
-            if full_shadow {
-                map_vis.set_visible(pos, false);
-                continue;
-            }
-
             let projection = project_tile(row, col);
 
             if line.is_in_shadow(projection) {
-                map_vis.set_visible(pos, false);
                 continue;
             }
 
             all_occluded = false;
-            map_vis.set_visible(pos, true);
+            mark_visible(visibles, pos);
 
-            if map_vis.is_occluding(pos) {
+            if is_occluding(visibles, pos) {
                 line.add_shadow(projection);
             }
         }
 
         if all_occluded {
-            full_shadow = true;
+            break;
         }
     }
 }
@@ -239,16 +235,4 @@ fn transform_octant(row: i32, col: i32, octant: usize) -> TilePos {
     };
 
     TilePos { x, y }
-}
-
-fn update_vis(old: VisibilityType, can_see: bool) -> VisibilityType {
-    if can_see {
-        return VisibilityType::CurrentlyVisible;
-    }
-
-    match old {
-        VisibilityType::CurrentlyVisible => VisibilityType::Remembered,
-        VisibilityType::Remembered => VisibilityType::Remembered,
-        VisibilityType::NotSeen => VisibilityType::NotSeen,
-    }
 }

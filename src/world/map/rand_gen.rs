@@ -105,11 +105,19 @@ pub struct MapGenResult {
     pub height: usize,
     // cells is row-by-row (C-indexed) for cells[x,y] is cells[y * width + x]
     pub cells: Vec<Square>,
+    // just an array of random stuff that could be generated
+    pub others: Vec<GeneratedEntity>,
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Square {
     pub square_type: SquareType,
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum GeneratedEntity {
+    Rubbish(TilePos),
+    Pillar(TilePos),
 }
 
 impl MapGenResult {
@@ -134,8 +142,6 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
     let open = make_raw_square(SquareType::Open);
     let floor = make_raw_square(SquareType::Floor);
     let wall = make_raw_square(SquareType::Wall);
-    let rubbish = make_raw_square(SquareType::Rubbish);
-    let pillar = make_raw_square(SquareType::Pillar);
     let door = make_raw_square(SquareType::Door);
 
     let width = params.map_dimensions.map_width;
@@ -148,7 +154,12 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
         cells.push(open);
     }
 
-    let mut map = MapGenResult { width, height, cells };
+    let mut map = MapGenResult {
+        width,
+        height,
+        cells,
+        others: Vec::new(),
+    };
 
     for x in 0..width {
         map.set_square(x, 0, wall);
@@ -178,14 +189,12 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
         for x in (room.left + 1)..room.right {
             for y in (room.top + 1)..room.bottom {
                 let next_perc = rng.gen_range(1, 101); // 1 to 100
-                let next_square = if next_perc <= 5 {
-                    rubbish
+                if next_perc <= 5 {
+                    map.others.push(GeneratedEntity::Rubbish(TilePos { x: x as i32, y: y as i32 }));
                 } else if next_perc <= 10 {
-                    pillar
-                } else {
-                    floor
+                    map.others.push(GeneratedEntity::Pillar(TilePos { x: x as i32, y: y as i32 }));
                 };
-                map.set_square(x, y, next_square);
+                map.set_square(x, y, floor);
             }
         }
     }

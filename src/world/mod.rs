@@ -1,5 +1,6 @@
 use super::*;
 
+use std::cmp::max;
 use std::ops::{Add, AddAssign};
 
 mod map;
@@ -17,10 +18,16 @@ impl WorldState {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
 pub struct TilePos {
     pub x: i32,
     pub y: i32,
+}
+
+impl TilePos {
+    pub fn manhattan_distance(&self, other: TilePos) -> i32 {
+        max((self.x - other.x).abs(), (self.y - other.y).abs())
+    }
 }
 
 impl Add<TilePos> for TilePos {

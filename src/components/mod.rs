@@ -26,8 +26,13 @@ pub struct MapTile {
 pub struct Visible {
     // whether the object is currently visible
     pub visibility: VisibilityType,
-    // TODO: should we pull occludes off into its own component with a NullStorage?
+    // If true, the object is marked as "remembered" if you saw it once, but can't anymore
+    // This should not be used for objects that move
+    // TODO: probably replace this with a "memory" system (memory entities; so if it's delete
+    // in your absence, you won't know until you see it again)
+    pub memorable: bool,
     // whether the object blocks visibility
+    // TODO: should we pull occludes off into its own component with a NullStorage?
     pub occludes: bool,
 }
 

@@ -12,9 +12,7 @@ pub enum SquareType {
     Open, // not allocated to anything (should not be accessible to the player)
     Floor,
     Wall,
-    Door,    // can walk, can't see through
-    Rubbish, // can't walk, can see through
-    Pillar,  // can't walk, can't see through
+    Door, // can walk, can't see through
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -43,8 +41,6 @@ fn make_glyph(kind: SquareType) -> char {
         SquareType::Floor => ' ',
         SquareType::Wall => '█',
         SquareType::Door => 'd',
-        SquareType::Rubbish => '`',
-        SquareType::Pillar => 'I',
     }
 }
 
@@ -53,11 +49,9 @@ fn get_occludes(kind: SquareType) -> bool {
         SquareType::Open => false,
 
         SquareType::Floor => false,
-        SquareType::Rubbish => false,
 
         SquareType::Wall => true,
         SquareType::Door => true,
-        SquareType::Pillar => true,
     }
 }
 
@@ -66,9 +60,7 @@ fn get_blocks(kind: SquareType) -> bool {
         SquareType::Floor => false,
         SquareType::Door => false,
 
-        SquareType::Rubbish => true,
         SquareType::Wall => true,
-        SquareType::Pillar => true,
         SquareType::Open => true,
     }
 }
@@ -106,6 +98,7 @@ impl Map {
                 .with(components::Visible {
                     visibility: VisibilityType::NotSeen,
                     occludes: get_occludes(square.square_type),
+                    memorable: true,
                 })
                 .with(components::HasPosition {
                     position: TilePos { x, y },
@@ -127,6 +120,53 @@ impl Map {
             if x > x_max {
                 x = x_min;
                 y += 1;
+            }
+        }
+
+        for other in gen_result.others {
+            match other {
+                rand_gen::GeneratedEntity::Rubbish(pos) => {
+                    world
+                        .create_entity()
+                        .with(components::HasPosition { position: pos })
+                        .with(components::CharRender {
+                            glyph: '`',
+                            fg_color: quicksilver::graphics::Color {
+                                r: 0.7,
+                                g: 0.7,
+                                b: 0.7,
+                                a: 1.0,
+                            },
+                        })
+                        .with(components::Visible {
+                            visibility: VisibilityType::NotSeen,
+                            occludes: false,
+                            memorable: false,
+                        })
+                        .with(components::BlocksMovement)
+                        .build();
+                }
+                rand_gen::GeneratedEntity::Pillar(pos) => {
+                    world
+                        .create_entity()
+                        .with(components::HasPosition { position: pos })
+                        .with(components::CharRender {
+                            glyph: 'I',
+                            fg_color: quicksilver::graphics::Color {
+                                r: 0.8,
+                                g: 0.6,
+                                b: 1.0,
+                                a: 1.0,
+                            },
+                        })
+                        .with(components::Visible {
+                            visibility: VisibilityType::NotSeen,
+                            occludes: true,
+                            memorable: false,
+                        })
+                        .with(components::BlocksMovement)
+                        .build();
+                }
             }
         }
 

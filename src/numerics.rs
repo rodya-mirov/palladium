@@ -30,5 +30,3 @@ impl From<f32> for Float {
         Float::make_unchecked(val)
     }
 }
-
-// TODO: all the arithmetic we end up needing

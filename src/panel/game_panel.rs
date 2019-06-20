@@ -107,6 +107,7 @@ impl GamePanel {
             .with(components::Visible {
                 visibility: world::VisibilityType::CurrentlyVisible,
                 occludes: false,
+                memorable: false,
             })
             .with(components::Player {})
             .build();
