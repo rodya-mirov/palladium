@@ -50,7 +50,7 @@ Roadmap
   - [x] Distinction between "unexplored / explored but not visible / visible" in rendering
   - [x] Modals with choices
   - [x] Objects?
-  - [ ] NPCs?
+  - [ ] NPCs? (which move around in a "turn-based" manner)
   - [ ] Save / load
 * Interactivity
 * Danger
@@ -58,3 +58,15 @@ Roadmap
 * Automation?
 * Aliens
 * Skills
+
+
+Scenarios
+--
+
+This is not an attempt to map out the whole game. Instead, here are some things I would like to be part of the game, at some point, and which I think are microcosms (in some sense) of my vision for the game.
+
+* **Plot Threads:** little notes, scattered around, which explain the world (things like the surrounding society, the nature of the Tether, other characters the player may or may not meet, etc.). These are in fixed locations (on the floor, in terminals, etc.) which the player can read, and build a feeling for the game's plot thereby.
+
+* **Oxygen**: most living things need air to breathe. This scenario calls for certain "air problems" to exist (e.g. a busted airlock or meteor hole sucking the air out into space). Lack of air kills anything that needs air, eventually (fairly quickly). This can be a danger to the player, but can also be used strategically to solve other problems (kill bad guys, put out fires, etc.), for example by forcing certain doors open or shut, to control which parts fo the map do and do not have air. Also, as the player "levels up" through exposure to low-air environments, they should (slightly) improve their ability to hold their breath, and should be able to perceive (through a toggleable UI overlay) what the air level around them is.
+
+* **Hacking**: in the scifi setting, hacking is a crucial tool. Many thing should be computerized, and most computerized things should be hackable (again, dependent on skill and possibly equipment). For example, an automated door could be hacked to stay open permanently, stay closed permanently, to only open for certain entities, etc.
