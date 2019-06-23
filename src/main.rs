@@ -15,7 +15,7 @@ use quicksilver::{
 mod components;
 mod game_state;
 mod numerics;
-mod panel;
+// mod panel;
 mod rng;
 mod skills;
 mod systems;

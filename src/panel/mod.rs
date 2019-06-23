@@ -1,11 +1,11 @@
 //! Module for describing "panels", the basic unit of flow control in this "engine"
 //! Panels "stack" in the following sense:
 //! - For rendering:
-//!   - Render is called, bottom to top (so "latter" covers "earlier")
+//!     - Render is called, bottom to top (so "latter" covers "earlier")
 //! - For updating:
-//!     - Update is called, bottom to top (so "latter" covers "earlier"), then
-//!     - do_key_input is called ONLY ON THE TOP
-//!     - From top to bottom, each panel is asked if it is dead; if so, it is removed
+//!     - Update is called, bottom to top (so "latter" covers "earlier"), then ...
+//!     - do_key_input is called ONLY ON THE TOP, then ...
+//!     - From top to bottom, each panel is asked if it is dead; if so, it is removed.
 //!         If a non-dead panel is found, the loop stops
 
 use super::*;

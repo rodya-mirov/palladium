@@ -18,10 +18,15 @@ impl<'a> System<'a> for PlayerMoveSystem {
         ReadStorage<'a, MapTile>,
         ReadExpect<'a, Keyboard>,
         ReadExpect<'a, WorldState>,
+        Read<'a, KeyboardFocus>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player, mut has_pos, blocks, camera, map_tiles, keyboard, world_state) = data;
+        let (player, mut has_pos, blocks, camera, map_tiles, keyboard, world_state, focus) = data;
+
+        if *focus != KeyboardFocus::GameMap {
+            return;
+        }
 
         let player_move = {
             if keyboard[Key::Left] == ButtonState::Pressed {

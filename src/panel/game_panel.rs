@@ -28,13 +28,6 @@ impl Default for GameIsQuit {
 }
 
 pub struct GamePanel {
-    world_params: Asset<MapGenerationParams>,
-    world_state_initiated: bool,
-
-    tileset: Asset<HashMap<char, Image>>,
-
-    controls_image: Asset<Image>,
-
     update_dispatcher: Dispatcher<'static, 'static>,
     input_dispatcher: Dispatcher<'static, 'static>,
     render_dispatcher: Dispatcher<'static, 'static>,
