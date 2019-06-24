@@ -11,5 +11,7 @@ ron = "*"
 rand = "0.6"
 specs = "0.14.3"
 specs-derive = "0.4.0"
+shred = "^0.7.0"
+shred-derive = "^0.5.0"
 # More features: "collisions", "complex_shapes", "immi_ui", "sounds", gamepads
 quicksilver = { version = "0.3.6", default-features = false, features = ["fonts", "saving"] }

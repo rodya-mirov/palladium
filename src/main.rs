@@ -4,11 +4,14 @@
 #[macro_use]
 extern crate specs_derive;
 
-use specs::Component;
+#[macro_use]
+extern crate shred_derive;
+
+use specs::prelude::*;
 
 use quicksilver::{
-    geom::Vector,
     lifecycle::{run, Asset, Settings},
+    prelude::*,
     Result as QsResult,
 };
 

@@ -6,11 +6,9 @@ use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::{Color, Font, FontStyle, Image},
     lifecycle::Window,
-    load_file,
-    prelude::*,
-    Future,
+    load_file, Future,
 };
-use specs::{Builder, Dispatcher, DispatcherBuilder, RunNow, World};
+use specs::{Builder, Dispatcher, DispatcherBuilder};
 use world::{Map, MapGenerationParams, TilePos, WorldState};
 
 pub struct MainState {
@@ -77,7 +75,7 @@ pub struct DialogueState {
 pub struct DialogueOptionState {
     pub selected_text: String,
     pub unselected_text: String,
-    pub callbacks: Vec<DialogueCallback>, // TODO: somehow need to track the callbacks (?)
+    pub callbacks: Vec<DialogueCallback>,
 }
 
 #[derive(Clone, Debug)]
@@ -87,6 +85,19 @@ pub enum DialogueCallback {
 }
 
 // TODO: move stuff into a resources module
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct PlayerHasMoved {
+    pub player_has_moved: bool,
+}
+
+impl Default for PlayerHasMoved {
+    fn default() -> Self {
+        // starts with "true" so various update steps will run
+        // in the first timestep, to help initialize the world
+        PlayerHasMoved { player_has_moved: true }
+    }
+}
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum KeyboardFocus {
@@ -112,12 +123,14 @@ impl Default for GameIsQuit {
 #[derive(Copy, Clone, Debug)]
 pub struct GameMapDisplayOptions {
     pub display_controls_pane: bool,
+    pub show_oxygen_overlay: bool,
 }
 
 impl Default for GameMapDisplayOptions {
     fn default() -> Self {
         GameMapDisplayOptions {
             display_controls_pane: true,
+            show_oxygen_overlay: false,
         }
     }
 }
@@ -170,7 +183,7 @@ fn make_assets() -> GameAssets {
     }));
 
     let controls_image = Asset::new(Font::load(game_state::FONT_MONONOKI_PATH).and_then(move |font| {
-        let controls = vec!["[Q]uit", "[C]ontrols", "[L]icenses"];
+        let controls = vec!["[Q]uit", "[C]ontrols", "[L]icenses", "[O]xygen Display"];
 
         font.render(&(controls.join("\n")), &FontStyle::new(18.0, Color::BLACK))
     }));
@@ -197,6 +210,7 @@ fn make_update_dispatcher(world: &mut World) -> Dispatcher<'static, 'static> {
         // since the actual render system isn't dispatched
         .with(systems::CharsRendererSetup, "chars_render", &[])
         .with(systems::ControlsRendererSetup, "controls_render", &[])
+        .with(systems::OxygenOverlaySetup, "oxygen_render", &[])
         .build();
 
     // we don't need to keep this dispatcher, just call setup on it
@@ -209,6 +223,8 @@ fn make_update_dispatcher(world: &mut World) -> Dispatcher<'static, 'static> {
         .with(systems::VisibilitySystem, "visibility", &[])
         .with(systems::ToggleControlSystem, "toggle_controls", &[])
         .with(systems::DialogueControlSystem, "dialogue_controls", &[])
+        .with(systems::OxygenSpreadSystem, "oxygen_spread", &[])
+        .with(systems::PlayerNotMoved, "player_not_moved", &[])
         .build();
 
     out.setup(&mut world.res);
@@ -392,6 +408,8 @@ impl State for MainState {
             tileset: &mut self.assets.tileset,
         }
         .run_now(&self.world.res);
+
+        systems::OxygenOverlayRenderer { window }.run_now(&self.world.res);
 
         systems::ControlsRenderer {
             window,

@@ -6,49 +6,61 @@ use specs::Join;
 use components::{BlocksMovement, Camera, HasPosition, MapTile, Player};
 use world::{TilePos, WorldState};
 
+#[derive(SystemData)]
+pub struct PlayerMoveSystemData<'a> {
+    player: ReadStorage<'a, Player>,
+    has_position: WriteStorage<'a, HasPosition>,
+    blocks_movement: ReadStorage<'a, BlocksMovement>,
+    camera: ReadStorage<'a, Camera>,
+    map_tile: ReadStorage<'a, MapTile>,
+    keyboard: ReadExpect<'a, Keyboard>,
+    world_state: ReadExpect<'a, WorldState>,
+    keyboard_focus: Read<'a, KeyboardFocus>,
+    player_has_moved: Write<'a, PlayerHasMoved>,
+}
+
 pub struct PlayerMoveSystem;
 
 impl<'a> System<'a> for PlayerMoveSystem {
-    #[allow(clippy::type_complexity)] // more or less inevitable with specs, this is just how it works
-    type SystemData = (
-        ReadStorage<'a, Player>,
-        WriteStorage<'a, HasPosition>,
-        ReadStorage<'a, BlocksMovement>,
-        ReadStorage<'a, Camera>,
-        ReadStorage<'a, MapTile>,
-        ReadExpect<'a, Keyboard>,
-        ReadExpect<'a, WorldState>,
-        Read<'a, KeyboardFocus>,
-    );
+    type SystemData = PlayerMoveSystemData<'a>;
 
-    fn run(&mut self, data: Self::SystemData) {
-        let (player, mut has_pos, blocks, camera, map_tiles, keyboard, world_state, focus) = data;
-
-        if *focus != KeyboardFocus::GameMap {
+    fn run(&mut self, mut data: Self::SystemData) {
+        if *data.keyboard_focus != KeyboardFocus::GameMap {
             return;
         }
 
         let player_move = {
-            if keyboard[Key::Left] == ButtonState::Pressed {
+            if data.keyboard[Key::Left] == ButtonState::Pressed {
                 Some(TilePos { x: -1, y: 0 })
-            } else if keyboard[Key::Right] == ButtonState::Pressed {
+            } else if data.keyboard[Key::Right] == ButtonState::Pressed {
                 Some(TilePos { x: 1, y: 0 })
-            } else if keyboard[Key::Up] == ButtonState::Pressed {
+            } else if data.keyboard[Key::Up] == ButtonState::Pressed {
                 Some(TilePos { x: 0, y: -1 })
-            } else if keyboard[Key::Down] == ButtonState::Pressed {
+            } else if data.keyboard[Key::Down] == ButtonState::Pressed {
                 Some(TilePos { x: 0, y: 1 })
+            } else if data.keyboard[Key::Space] == ButtonState::Pressed {
+                Some(TilePos { x: 0, y: 0 })
             } else {
                 None
             }
         };
 
+        let mut player_moved = false;
+
         if let Some(player_move) = player_move {
-            let player_pos = get_pos(&player, &has_pos);
+            let player_pos = get_pos(&data.player, &data.has_position);
             let next_pos = player_pos + player_move;
-            if !tile_blocks(next_pos, &blocks, &world_state) && !non_tile_blocks(next_pos, &has_pos, &blocks, &map_tiles) {
-                *get_pos_mut(&player, &mut has_pos) += player_move;
-                *get_pos_mut(&camera, &mut has_pos) += player_move;
+            if !tile_blocks(next_pos, &data.blocks_movement, &data.world_state)
+                && !non_tile_blocks(next_pos, &data.has_position, &data.blocks_movement, &data.map_tile)
+            {
+                *get_pos_mut(&data.player, &mut data.has_position) += player_move;
+                *get_pos_mut(&data.camera, &mut data.has_position) += player_move;
+                player_moved = true;
             }
+        }
+
+        if player_moved {
+            data.player_has_moved.player_has_moved = true;
         }
     }
 }

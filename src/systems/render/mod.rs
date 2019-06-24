@@ -7,15 +7,17 @@
 
 use super::*;
 
-use quicksilver::{geom::Shape, graphics::Image, lifecycle::Window, prelude::*};
+use quicksilver::{geom::Shape, graphics::Image, lifecycle::Window};
 
 mod centered_image_renderer;
 mod chars_renderer;
 mod controls_renderer;
+mod oxygen_overlay;
 
 pub use centered_image_renderer::CenteredVerticalImagesRenderer;
 pub use chars_renderer::{CharsRenderer, CharsRendererSetup};
 pub use controls_renderer::{ControlsRenderer, ControlsRendererSetup};
+pub use oxygen_overlay::{OxygenOverlayRenderer, OxygenOverlaySetup};
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 #[allow(dead_code)] // we want to support all these corners for the future

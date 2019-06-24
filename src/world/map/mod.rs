@@ -1,6 +1,6 @@
 use super::*;
 
-use specs::{Builder, Entity, World};
+use specs::{Builder, Entity};
 
 mod params;
 mod rand_gen;
@@ -44,6 +44,15 @@ fn make_glyph(kind: SquareType) -> char {
     }
 }
 
+fn make_fg_color(kind: SquareType) -> Color {
+    match kind {
+        SquareType::Floor => Color::WHITE,
+        SquareType::Wall => Color::WHITE,
+        SquareType::Door => Color::WHITE,
+        SquareType::Open => Color::BLACK,
+    }
+}
+
 fn get_occludes(kind: SquareType) -> bool {
     match kind {
         SquareType::Open => false,
@@ -61,6 +70,27 @@ fn get_blocks(kind: SquareType) -> bool {
         SquareType::Door => false,
 
         SquareType::Wall => true,
+        SquareType::Open => true,
+    }
+}
+
+fn get_blocks_airflow(kind: SquareType) -> bool {
+    match kind {
+        SquareType::Floor => false,
+
+        SquareType::Door => true,
+        SquareType::Wall => true,
+
+        SquareType::Open => false,
+    }
+}
+
+fn get_vacuum(kind: SquareType) -> bool {
+    match kind {
+        SquareType::Floor => false,
+        SquareType::Door => false,
+        SquareType::Wall => false,
+
         SquareType::Open => true,
     }
 }
@@ -94,7 +124,7 @@ impl Map {
         for square in gen_result.cells {
             let mut tile_builder = world
                 .create_entity()
-                .with(components::MapTile { kind: square.square_type })
+                .with(components::MapTile)
                 .with(components::Visible {
                     visibility: VisibilityType::NotSeen,
                     occludes: get_occludes(square.square_type),
@@ -103,13 +133,23 @@ impl Map {
                 .with(components::HasPosition {
                     position: TilePos { x, y },
                 })
+                .with(components::OxygenContainer {
+                    capacity: 10,
+                    contents: 10,
+                })
                 .with(components::CharRender {
                     glyph: make_glyph(square.square_type),
-                    fg_color: quicksilver::graphics::Color::WHITE,
+                    fg_color: make_fg_color(square.square_type),
                 });
 
             if get_blocks(square.square_type) {
                 tile_builder = tile_builder.with(components::BlocksMovement);
+            }
+            if get_blocks_airflow(square.square_type) {
+                tile_builder = tile_builder.with(components::BlocksAirflow);
+            }
+            if get_vacuum(square.square_type) {
+                tile_builder = tile_builder.with(components::Vacuum);
             }
 
             let tile = tile_builder.build();

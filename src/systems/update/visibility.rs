@@ -8,8 +8,6 @@ use super::*;
 use std::cmp::max;
 use std::collections::HashMap;
 
-use specs::prelude::*;
-
 use components::{HasPosition, Player, Visible};
 use numerics::Float;
 use world::{TilePos, VisibilityType};
@@ -20,12 +18,20 @@ pub struct VisibilitySystem;
 // technically populating the hashmap doesn't seem ideal, but we can cache later (and really should)
 type Visibles<'a> = HashMap<TilePos, Vec<&'a mut Visible>>; // pos -> 1 or more entities at that position
 
-// TODO: caching; don't recompute unless somebody moves ... ?
 impl<'a> System<'a> for VisibilitySystem {
-    type SystemData = (ReadStorage<'a, Player>, ReadStorage<'a, HasPosition>, WriteStorage<'a, Visible>);
+    type SystemData = (
+        ReadStorage<'a, Player>,
+        ReadStorage<'a, HasPosition>,
+        WriteStorage<'a, Visible>,
+        Read<'a, PlayerHasMoved>,
+    );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player, has_pos, mut vis) = data;
+        let (player, has_pos, mut vis, player_has_moved) = data;
+
+        if !player_has_moved.player_has_moved {
+            return;
+        }
 
         let player_pos: TilePos = (&player, &has_pos)
             .join()

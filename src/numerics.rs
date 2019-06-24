@@ -31,7 +31,7 @@ impl From<f32> for Float {
     }
 }
 
-#[allow(clippy::if_same_then_else)]
+#[allow(clippy::if_same_then_else)] // shutup clippy
 pub fn force_max(a: f32, b: f32) -> f32 {
     if a.is_nan() {
         b

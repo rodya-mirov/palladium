@@ -2,7 +2,9 @@ use super::*;
 
 use specs::{Read, ReadExpect, ReadStorage, System, Write, WriteStorage};
 
-use game_state::{DialogueCallback, DialogueOptionState, DialogueState, DialogueStateResource, InitializationState, KeyboardFocus};
+use game_state::{
+    DialogueCallback, DialogueOptionState, DialogueState, DialogueStateResource, InitializationState, KeyboardFocus, PlayerHasMoved,
+};
 
 mod input;
 mod render;

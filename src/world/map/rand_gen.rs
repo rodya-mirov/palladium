@@ -194,7 +194,15 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
                 } else if next_perc <= 10 {
                     map.others.push(GeneratedEntity::Pillar(TilePos { x: x as i32, y: y as i32 }));
                 };
-                map.set_square(x, y, floor);
+
+                let next_square = {
+                    if rng.gen_range(1, 101) == 1 {
+                        open
+                    } else {
+                        floor
+                    }
+                };
+                map.set_square(x, y, next_square);
             }
         }
     }

@@ -23,6 +23,8 @@ impl<'a> System<'a> for ToggleControlSystem {
 
         if keyboard[Key::C] == ButtonState::Pressed {
             display_options.display_controls_pane = !display_options.display_controls_pane;
+        } else if keyboard[Key::O] == ButtonState::Pressed {
+            display_options.show_oxygen_overlay = !display_options.show_oxygen_overlay;
         } else if keyboard[Key::Q] == ButtonState::Pressed {
             let builder = DialogueBuilder::new("Quit the game?\nYour progress will not be saved!")
                 .with_option("[Cancel]", vec![DialogueCallback::EndDialogue])
