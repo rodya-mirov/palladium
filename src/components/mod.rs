@@ -54,7 +54,7 @@ pub struct Player {
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
 #[storage(DenseVecStorage)]
 pub struct OxygenContainer {
-    pub capacity: usize, // how much air the entity can hold
+    pub capacity: usize, // how much air the entity can hold. The "default" is 100
     pub contents: usize, // how much air the entity currently has
 }
 

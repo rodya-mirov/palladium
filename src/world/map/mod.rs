@@ -134,8 +134,8 @@ impl Map {
                     position: TilePos { x, y },
                 })
                 .with(components::OxygenContainer {
-                    capacity: 10,
-                    contents: 10,
+                    capacity: 100,
+                    contents: 100,
                 })
                 .with(components::CharRender {
                     glyph: make_glyph(square.square_type),

@@ -20,7 +20,8 @@ pub struct OxygenSpreadSystemData<'a> {
 }
 
 // We do more iterations, with higher capacity, to make oxygen dispersal more "smooth"
-const NUM_ITERATIONS: usize = 5;
+const NUM_ITERATIONS: usize = 10;
+const SHARING_PER_ITERATION: usize = 2;
 
 struct OxygenTaker<'b> {
     container: &'b mut OxygenContainer,
@@ -69,10 +70,14 @@ impl<'a> System<'a> for OxygenSpreadSystem {
 
             for (ent, mut giver_oxygen, has_pos, _) in (&data.entities, &mut data.oxygen_cont, &data.has_pos, !&data.blocks_airflow).join()
             {
-                if giver_oxygen.contents > 0 {
-                    // NB: we only insert if capacity is >0; we will maintain this invariant
-                    *oxygen_sharing.entry(has_pos.position).or_insert(0) += 1;
-                    giver_oxygen.contents -= 1;
+                for _ in 0..SHARING_PER_ITERATION {
+                    if giver_oxygen.contents > 0 {
+                        // NB: we only insert if capacity is >0; we will maintain this invariant
+                        *oxygen_sharing.entry(has_pos.position).or_insert(0) += 1;
+                        giver_oxygen.contents -= 1;
+                    } else {
+                        break;
+                    }
                 }
 
                 let is_vacuum = data.vacuums.get(ent).is_some();
