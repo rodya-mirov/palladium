@@ -118,6 +118,7 @@ pub struct Square {
 pub enum GeneratedEntity {
     Rubbish(TilePos),
     Pillar(TilePos),
+    Door(TilePos),
 }
 
 impl MapGenResult {
@@ -142,7 +143,6 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
     let open = make_raw_square(SquareType::Open);
     let floor = make_raw_square(SquareType::Floor);
     let wall = make_raw_square(SquareType::Wall);
-    let door = make_raw_square(SquareType::Door);
 
     let width = params.map_dimensions.map_width;
     let height = params.map_dimensions.map_height;
@@ -215,7 +215,11 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
             let b = rooms[j];
 
             if let Some(door_val) = a.try_make_door(&b, &mut rng) {
-                map.set_square(door_val.x, door_val.y, door);
+                map.set_square(door_val.x, door_val.y, floor);
+                map.others.push(GeneratedEntity::Door(TilePos {
+                    x: door_val.x as i32,
+                    y: door_val.y as i32,
+                }))
             }
         }
     }

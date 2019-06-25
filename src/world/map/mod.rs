@@ -9,10 +9,9 @@ pub use params::MapGenerationParams;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum SquareType {
-    Open, // not allocated to anything (should not be accessible to the player)
+    Open, // open to space; usually not visible but used as a stand-in for "hull breach"
     Floor,
     Wall,
-    Door, // can walk, can't see through
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -40,7 +39,6 @@ fn make_glyph(kind: SquareType) -> char {
         SquareType::Open => '*',
         SquareType::Floor => ' ',
         SquareType::Wall => '█',
-        SquareType::Door => 'd',
     }
 }
 
@@ -48,7 +46,6 @@ fn make_fg_color(kind: SquareType) -> Color {
     match kind {
         SquareType::Floor => Color::WHITE,
         SquareType::Wall => Color::WHITE,
-        SquareType::Door => Color::WHITE,
         SquareType::Open => Color::BLACK,
     }
 }
@@ -60,14 +57,12 @@ fn get_occludes(kind: SquareType) -> bool {
         SquareType::Floor => false,
 
         SquareType::Wall => true,
-        SquareType::Door => true,
     }
 }
 
 fn get_blocks(kind: SquareType) -> bool {
     match kind {
         SquareType::Floor => false,
-        SquareType::Door => false,
 
         SquareType::Wall => true,
         SquareType::Open => true,
@@ -78,7 +73,6 @@ fn get_blocks_airflow(kind: SquareType) -> bool {
     match kind {
         SquareType::Floor => false,
 
-        SquareType::Door => true,
         SquareType::Wall => true,
 
         SquareType::Open => false,
@@ -88,7 +82,6 @@ fn get_blocks_airflow(kind: SquareType) -> bool {
 fn get_vacuum(kind: SquareType) -> bool {
     match kind {
         SquareType::Floor => false,
-        SquareType::Door => false,
         SquareType::Wall => false,
 
         SquareType::Open => true,
@@ -165,6 +158,26 @@ impl Map {
 
         for other in gen_result.others {
             match other {
+                rand_gen::GeneratedEntity::Door(pos) => {
+                    world
+                        .create_entity()
+                        .with(components::HasPosition { position: pos })
+                        .with(components::CharRender {
+                            glyph: 'd',
+                            fg_color: Color::WHITE,
+                        })
+                        .with(components::Visible {
+                            visibility: VisibilityType::NotSeen,
+                            occludes: true,
+                            memorable: true,
+                        })
+                        .with(components::Door {
+                            door_state: components::DoorState::Closed,
+                        })
+                        .with(components::BlocksAirflow)
+                        .with(components::BlocksMovement)
+                        .build();
+                }
                 rand_gen::GeneratedEntity::Rubbish(pos) => {
                     world
                         .create_entity()

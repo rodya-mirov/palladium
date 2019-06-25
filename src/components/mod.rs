@@ -63,14 +63,20 @@ pub struct OxygenContainer {
 pub struct Vacuum; // oxygen container which destroys all its oxygen each timestep
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
-#[storage(DenseVecStorage)]
-pub struct NeedsOxygen {
-    pub capacity: usize,          // how much air the "lungs" can "hold"
-    pub contents: usize,          // how much air is in the "lungs"
-    pub breathing_speed: usize,   // in oxygen, gains this much / timestep
-    pub consumption_speed: usize, // in oxygen, depletes this much / timestep from enviroment
-    pub depletion_rate: usize,    // without oxygen, how fast contents deplete
+#[storage(HashMapStorage)]
+pub struct Door {
+    pub door_state: DoorState,
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DoorState {
+    Open,
+    Closed,
+}
+
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[storage(NullStorage)]
+pub struct OpensDoors;
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
 #[storage(HashMapStorage)]

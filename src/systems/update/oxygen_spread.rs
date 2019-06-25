@@ -1,6 +1,6 @@
 use super::*;
 
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use components::{BlocksAirflow, HasPosition, OxygenContainer, Vacuum};
 
@@ -63,12 +63,19 @@ impl<'a> System<'a> for OxygenSpreadSystem {
             return;
         }
 
+        let airblocks = (&data.has_pos, &data.blocks_airflow)
+            .join()
+            .map(|(hp, _)| hp.position)
+            .collect::<HashSet<TilePos>>();
+
         for _ in 0..NUM_ITERATIONS {
             // first, loop through all containers and see if they can share with their neighbors
             let mut oxygen_taker_queue = BinaryHeap::new();
             let mut oxygen_sharing = HashMap::new();
 
-            for (ent, mut giver_oxygen, has_pos, _) in (&data.entities, &mut data.oxygen_cont, &data.has_pos, !&data.blocks_airflow).join()
+            for (ent, mut giver_oxygen, has_pos) in (&data.entities, &mut data.oxygen_cont, &data.has_pos)
+                .join()
+                .filter(|(_, _, hp)| !airblocks.contains(&hp.position))
             {
                 for _ in 0..SHARING_PER_ITERATION {
                     if giver_oxygen.contents > 0 {
@@ -130,12 +137,28 @@ impl<'a> System<'a> for OxygenSpreadSystem {
     }
 }
 
-fn neighbors(pos: TilePos) -> [TilePos; 5] {
+fn neighbors(pos: TilePos) -> [TilePos; 9] {
     [
         pos,
+        TilePos {
+            x: pos.x - 1,
+            y: pos.y - 1,
+        },
         TilePos { x: pos.x - 1, y: pos.y },
+        TilePos {
+            x: pos.x - 1,
+            y: pos.y + 1,
+        },
         TilePos { x: pos.x, y: pos.y - 1 },
-        TilePos { x: pos.x + 1, y: pos.y },
         TilePos { x: pos.x, y: pos.y + 1 },
+        TilePos {
+            x: pos.x + 1,
+            y: pos.y - 1,
+        },
+        TilePos { x: pos.x + 1, y: pos.y },
+        TilePos {
+            x: pos.x + 1,
+            y: pos.y + 1,
+        },
     ]
 }

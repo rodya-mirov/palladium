@@ -11,3 +11,6 @@ pub use visibility::VisibilitySystem;
 
 mod oxygen_spread;
 pub use oxygen_spread::OxygenSpreadSystem;
+
+mod door_update;
+pub use door_update::DoorOpenSystem;
