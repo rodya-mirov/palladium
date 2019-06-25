@@ -4,8 +4,6 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use components::{BlocksAirflow, HasPosition, OxygenContainer, Vacuum};
 
-use world::TilePos;
-
 pub struct OxygenSpreadSystem;
 
 #[derive(SystemData)]
@@ -135,30 +133,4 @@ impl<'a> System<'a> for OxygenSpreadSystem {
             }
         }
     }
-}
-
-fn neighbors(pos: TilePos) -> [TilePos; 9] {
-    [
-        pos,
-        TilePos {
-            x: pos.x - 1,
-            y: pos.y - 1,
-        },
-        TilePos { x: pos.x - 1, y: pos.y },
-        TilePos {
-            x: pos.x - 1,
-            y: pos.y + 1,
-        },
-        TilePos { x: pos.x, y: pos.y - 1 },
-        TilePos { x: pos.x, y: pos.y + 1 },
-        TilePos {
-            x: pos.x + 1,
-            y: pos.y - 1,
-        },
-        TilePos { x: pos.x + 1, y: pos.y },
-        TilePos {
-            x: pos.x + 1,
-            y: pos.y + 1,
-        },
-    ]
 }

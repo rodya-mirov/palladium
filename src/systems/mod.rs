@@ -6,6 +6,8 @@ use game_state::{
     DialogueCallback, DialogueOptionState, DialogueState, DialogueStateResource, InitializationState, KeyboardFocus, PlayerHasMoved,
 };
 
+use world::TilePos;
+
 mod input;
 mod render;
 mod update;
@@ -93,4 +95,30 @@ fn launch_dialogue<'a>(builder: DialogueBuilder, focus: &mut KeyboardFocus, dial
         is_initialized: InitializationState::NotStarted,
         state: Some(builder.build()),
     };
+}
+
+fn neighbors(pos: TilePos) -> [TilePos; 9] {
+    [
+        pos,
+        TilePos {
+            x: pos.x - 1,
+            y: pos.y - 1,
+        },
+        TilePos { x: pos.x - 1, y: pos.y },
+        TilePos {
+            x: pos.x - 1,
+            y: pos.y + 1,
+        },
+        TilePos { x: pos.x, y: pos.y - 1 },
+        TilePos { x: pos.x, y: pos.y + 1 },
+        TilePos {
+            x: pos.x + 1,
+            y: pos.y - 1,
+        },
+        TilePos { x: pos.x + 1, y: pos.y },
+        TilePos {
+            x: pos.x + 1,
+            y: pos.y + 1,
+        },
+    ]
 }

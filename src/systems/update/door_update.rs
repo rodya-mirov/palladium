@@ -4,8 +4,6 @@ use std::collections::HashSet;
 
 use components::{BlocksAirflow, BlocksMovement, CharRender, Door, HasPosition, OpensDoors};
 
-use world::TilePos;
-
 pub struct DoorOpenSystem;
 
 #[derive(SystemData)]
@@ -57,33 +55,6 @@ impl<'a> System<'a> for DoorOpenSystem {
             }
         }
     }
-}
-
-// TODO: pull this out into a helper function
-fn neighbors(pos: TilePos) -> [TilePos; 9] {
-    [
-        pos,
-        TilePos {
-            x: pos.x - 1,
-            y: pos.y - 1,
-        },
-        TilePos { x: pos.x - 1, y: pos.y },
-        TilePos {
-            x: pos.x - 1,
-            y: pos.y + 1,
-        },
-        TilePos { x: pos.x, y: pos.y - 1 },
-        TilePos { x: pos.x, y: pos.y + 1 },
-        TilePos {
-            x: pos.x + 1,
-            y: pos.y - 1,
-        },
-        TilePos { x: pos.x + 1, y: pos.y },
-        TilePos {
-            x: pos.x + 1,
-            y: pos.y + 1,
-        },
-    ]
 }
 
 fn get_renderable(open: bool) -> CharRender {
