@@ -28,7 +28,6 @@ pub struct OxygenOverlaySystemData<'a> {
 
 pub struct OxygenOverlaySetup;
 
-// TODO: add to dispatcher
 impl<'a> System<'a> for OxygenOverlaySetup {
     type SystemData = OxygenOverlaySystemData<'a>;
 
@@ -37,7 +36,6 @@ impl<'a> System<'a> for OxygenOverlaySetup {
     }
 }
 
-// TODO: add to renderer
 pub struct OxygenOverlayRenderer<'a> {
     pub window: &'a mut Window,
 }
@@ -59,6 +57,7 @@ impl<'a, 'b> System<'a> for OxygenOverlayRenderer<'b> {
         let mut oxygen_contents = HashMap::new();
 
         for (has_pos, oxygen_cont, vis) in (&data.has_pos, &data.oxygen_cont, &data.visible).join() {
+            // Note: if there are two oxygen containers in a square it will look weird :shrug:
             if camera_bounds.contains_pos(has_pos.position) && vis.visibility == VisibilityType::CurrentlyVisible {
                 *oxygen_contents.entry(has_pos.position).or_insert(0) += oxygen_cont.contents;
             }
@@ -67,8 +66,8 @@ impl<'a, 'b> System<'a> for OxygenOverlayRenderer<'b> {
         // First, paint all the relevant tiles (gotten direct from position loop)
         for x in camera_bounds.x_min..=camera_bounds.x_max {
             for y in camera_bounds.y_min..=camera_bounds.y_max {
+                // NB: this is None when there is nothing visible in the area
                 if let Some(contents) = oxygen_contents.get(&TilePos { x, y }) {
-                    // TODO: should we worry about visibility? Not sure what the metaphor is
                     let render_pos = get_render_pos(x, y, camera_bounds, *data.render_params);
                     let rect = Rectangle::new(
                         render_pos,

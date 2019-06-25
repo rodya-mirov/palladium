@@ -340,9 +340,6 @@ impl State for MainState {
 
         let update_dispatcher = make_update_dispatcher(&mut world);
 
-        // TODO: probably shouldn't need this?
-        world.add_resource(GameIsQuit::default());
-
         let _player = world
             .create_entity()
             .with(components::HasPosition {
@@ -421,7 +418,6 @@ impl State for MainState {
         window.flush()?;
 
         if let Some(dialogue_assets) = self.assets.dialogue_assets.as_mut() {
-            // TODO: dim the backdrop somehow?
             window.draw(
                 &Rectangle {
                     pos: Vector::new(0, 0),
