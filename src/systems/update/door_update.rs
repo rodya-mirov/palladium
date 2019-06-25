@@ -34,7 +34,7 @@ impl<'a> System<'a> for DoorOpenSystem {
         }
 
         for (mut door, has_pos, entity) in (&mut data.door, &data.has_position, &data.entities).join() {
-            let should_open = neighbors(has_pos.position).into_iter().any(|pos| has_door_open.contains(&pos));
+            let should_open = neighbors(has_pos.position).iter().any(|pos| has_door_open.contains(&pos));
 
             if should_open {
                 door.door_state = components::DoorState::Open;

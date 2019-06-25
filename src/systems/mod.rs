@@ -73,7 +73,7 @@ impl DialogueOptionBuilder {
     }
 }
 
-fn end_dialogue<'a>(focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStateResource) {
+fn end_dialogue(focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStateResource) {
     if *focus != KeyboardFocus::Dialogue {
         panic!("Cannot end dialogue when it is not running!");
     }
@@ -85,7 +85,7 @@ fn end_dialogue<'a>(focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStat
     };
 }
 
-fn launch_dialogue<'a>(builder: DialogueBuilder, focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStateResource) {
+fn launch_dialogue(builder: DialogueBuilder, focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStateResource) {
     if *focus != KeyboardFocus::GameMap {
         panic!("Can only start dialogue from game map!");
     }
