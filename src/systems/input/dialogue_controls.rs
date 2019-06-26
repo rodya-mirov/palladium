@@ -17,7 +17,7 @@ pub struct DialogueControlSystemData<'a> {
     game_is_quit: Write<'a, GameIsQuit>,
     keyboard_focus: Write<'a, KeyboardFocus>,
     dialogue_state_resource: Write<'a, DialogueStateResource>,
-    player_has_moved: Write<'a, PlayerHasMoved>,
+    npc_moves: Write<'a, NpcMoves>,
 }
 
 const ACCEPT_KEYS: [Key; 2] = [Key::Space, Key::Return];
@@ -40,7 +40,7 @@ impl<'a> System<'a> for DialogueControlSystem {
                 &mut data.hackable,
                 &mut data.keyboard_focus,
                 &mut data.game_is_quit,
-                &mut data.player_has_moved,
+                &mut data.npc_moves,
             );
             *data.dialogue_state_resource = new_dsr;
         }
@@ -68,7 +68,7 @@ fn user_selected(
     hackable: &mut WriteStorage<'_, Hackable>,
     focus: &mut KeyboardFocus,
     game_is_quit: &mut GameIsQuit,
-    player_has_moved: &mut PlayerHasMoved,
+    npc_moves: &mut NpcMoves,
 ) -> DialogueStateResource {
     let mut new_dsr = DialogueStateResource {
         is_initialized: InitializationState::Finished,
@@ -83,7 +83,7 @@ fn user_selected(
                 end_dialogue(focus, &mut new_dsr);
             }
             DialogueCallback::Hack(hack_callback) => {
-                handle_hack_callback(hack_callback, hackable, player_has_moved, focus, &mut new_dsr);
+                handle_hack_callback(hack_callback, hackable, npc_moves, focus, &mut new_dsr);
             }
             DialogueCallback::QuitGame => {
                 game_is_quit.0 = true;
@@ -97,26 +97,30 @@ fn user_selected(
 fn handle_hack_callback(
     hack_callback: HackDialogueCallback,
     hackable: &mut WriteStorage<'_, Hackable>,
-    player_has_moved: &mut PlayerHasMoved,
+    npc_moves: &mut NpcMoves,
     focus: &mut KeyboardFocus,
     dialogue_state: &mut DialogueStateResource,
 ) {
     match hack_callback {
-        HackDialogueCallback::InitiateHack(entity, hack_target) => {
+        HackDialogueCallback::InitiateHack {
+            entity,
+            target,
+            turn_duration,
+        } => {
             let hackable = hackable
                 .get_mut(entity)
                 .expect("If we initiated hack on an entity, it better be hackable");
 
             match &mut hackable.hack_state {
                 HackState::Door(ref mut door_hack_state) => {
-                    let HackTarget::Door(new_hack_state) = hack_target;
+                    let HackTarget::Door { new_hack_state } = target;
                     *door_hack_state = new_hack_state;
                 }
             }
 
-            player_has_moved.player_has_moved = true;
+            turn_state_helpers::yield_moves_to_npc(npc_moves, turn_duration);
         }
-        HackDialogueCallback::ChooseHackTarget(entity) => {
+        HackDialogueCallback::ChooseHackTarget { entity } => {
             let hackable = hackable
                 .get_mut(entity)
                 .expect("If we initiated hack on an entity, it better be hackable");
@@ -129,10 +133,13 @@ fn handle_hack_callback(
                     builder = builder.with_option(
                         "[Compromise]",
                         vec![
-                            DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                            DialogueCallback::Hack(HackDialogueCallback::InitiateHack {
                                 entity,
-                                HackTarget::Door(DoorHackState::CompromisedNormal),
-                            )),
+                                target: HackTarget::Door {
+                                    new_hack_state: DoorHackState::CompromisedNormal,
+                                },
+                                turn_duration: 60,
+                            }),
                             DialogueCallback::EndDialogue,
                         ],
                     );
@@ -142,30 +149,39 @@ fn handle_hack_callback(
                         .with_option(
                             "[Lock Shut]",
                             vec![
-                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack {
                                     entity,
-                                    HackTarget::Door(DoorHackState::CompromisedShut),
-                                )),
+                                    target: HackTarget::Door {
+                                        new_hack_state: DoorHackState::CompromisedShut,
+                                    },
+                                    turn_duration: 5,
+                                }),
                                 DialogueCallback::EndDialogue,
                             ],
                         )
                         .with_option(
                             "[Lock Open]",
                             vec![
-                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack {
                                     entity,
-                                    HackTarget::Door(DoorHackState::CompromisedOpen),
-                                )),
+                                    target: HackTarget::Door {
+                                        new_hack_state: DoorHackState::CompromisedOpen,
+                                    },
+                                    turn_duration: 5,
+                                }),
                                 DialogueCallback::EndDialogue,
                             ],
                         )
                         .with_option(
                             "[Restore Normal Operations]",
                             vec![
-                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack {
                                     entity,
-                                    HackTarget::Door(DoorHackState::CompromisedNormal),
-                                )),
+                                    target: HackTarget::Door {
+                                        new_hack_state: DoorHackState::CompromisedNormal,
+                                    },
+                                    turn_duration: 5,
+                                }),
                                 DialogueCallback::EndDialogue,
                             ],
                         );

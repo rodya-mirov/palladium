@@ -5,6 +5,7 @@ use specs::{Read, ReadExpect, ReadStorage, System, Write, WriteStorage};
 use world::TilePos;
 
 mod dialogue_helpers;
+mod turn_state_helpers;
 
 mod input;
 mod render;

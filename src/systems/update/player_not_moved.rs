@@ -1,13 +1,13 @@
 use super::*;
 
-use resources::PlayerHasMoved;
+use resources::NpcMoves;
 
 pub struct PlayerNotMoved;
 
 impl<'a> System<'a> for PlayerNotMoved {
-    type SystemData = Write<'a, PlayerHasMoved>;
+    type SystemData = Write<'a, NpcMoves>;
 
     fn run(&mut self, mut data: Self::SystemData) {
-        data.player_has_moved = false;
+        turn_state_helpers::timestep(&mut data);
     }
 }

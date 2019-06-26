@@ -3,7 +3,7 @@ use super::*;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use components::{BlocksAirflow, HasPosition, OxygenContainer, Vacuum};
-use resources::PlayerHasMoved;
+use resources::NpcMoves;
 
 pub struct OxygenSpreadSystem;
 
@@ -15,7 +15,7 @@ pub struct OxygenSpreadSystemData<'a> {
     blocks_airflow: ReadStorage<'a, BlocksAirflow>,
 
     entities: Entities<'a>,
-    player_has_moved: Read<'a, PlayerHasMoved>,
+    npc_moves: Read<'a, NpcMoves>,
 }
 
 // We do more iterations, with higher capacity, to make oxygen dispersal more "smooth"
@@ -58,7 +58,7 @@ impl<'a> System<'a> for OxygenSpreadSystem {
     type SystemData = OxygenSpreadSystemData<'a>;
 
     fn run(&mut self, mut data: Self::SystemData) {
-        if !data.player_has_moved.player_has_moved {
+        if !data.npc_moves.move_was_made {
             return;
         }
 

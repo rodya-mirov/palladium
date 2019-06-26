@@ -9,7 +9,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 
 use components::{BlocksVisibility, HasPosition, Player, Visible};
-use resources::PlayerHasMoved;
+use resources::NpcMoves;
 
 use numerics::Float;
 use world::{TilePos, VisibilityType};
@@ -27,13 +27,13 @@ impl<'a> System<'a> for VisibilitySystem {
         ReadStorage<'a, HasPosition>,
         ReadStorage<'a, BlocksVisibility>,
         WriteStorage<'a, Visible>,
-        Read<'a, PlayerHasMoved>,
+        Read<'a, NpcMoves>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
         let (player, has_pos, blocks_vis, mut vis, player_has_moved) = data;
 
-        if !player_has_moved.player_has_moved {
+        if !player_has_moved.move_was_made {
             return;
         }
 

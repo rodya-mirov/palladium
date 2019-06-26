@@ -3,7 +3,7 @@ use super::*;
 use std::collections::HashSet;
 
 use components::*;
-use resources::PlayerHasMoved;
+use resources::NpcMoves;
 
 pub struct DoorOpenSystem;
 
@@ -17,7 +17,7 @@ pub struct DoorOpenSystemData<'a> {
     blocks_movement: WriteStorage<'a, BlocksMovement>,
     char_render: WriteStorage<'a, CharRender>,
 
-    player_has_moved: Read<'a, PlayerHasMoved>,
+    npc_moves: Read<'a, NpcMoves>,
     entities: Entities<'a>,
 }
 
@@ -25,7 +25,7 @@ impl<'a> System<'a> for DoorOpenSystem {
     type SystemData = DoorOpenSystemData<'a>;
 
     fn run(&mut self, mut data: Self::SystemData) {
-        if !data.player_has_moved.player_has_moved {
+        if !data.npc_moves.move_was_made {
             return;
         }
 

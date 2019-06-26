@@ -123,7 +123,7 @@ fn choose_hack_target_dialogue(hackables: Vec<(&Hackable, Direction, Entity)>, f
             &name,
             vec![
                 DialogueCallback::EndDialogue,
-                DialogueCallback::Hack(HackDialogueCallback::ChooseHackTarget(entity)),
+                DialogueCallback::Hack(HackDialogueCallback::ChooseHackTarget { entity }),
             ],
         );
     }

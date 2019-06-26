@@ -47,25 +47,48 @@ pub enum DialogueCallback {
 
 #[derive(Clone, Debug)]
 pub enum HackDialogueCallback {
-    ChooseHackTarget(Entity),
-    InitiateHack(Entity, HackTarget),
+    ChooseHackTarget {
+        entity: Entity,
+    },
+    InitiateHack {
+        entity: Entity,
+        target: HackTarget,
+        turn_duration: usize,
+    },
 }
 
 #[derive(Clone, Debug)]
 pub enum HackTarget {
-    Door(components::DoorHackState), // door(new_hack_state)
+    Door { new_hack_state: components::DoorHackState },
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct PlayerHasMoved {
-    pub player_has_moved: bool,
+pub struct NpcMoves {
+    pub npc_moves_remaining: usize,
+    pub ticks_till_next_npc_move: usize,
+    // Essentially, whether "response" systems should run
+    pub move_was_made: bool,
 }
 
-impl Default for PlayerHasMoved {
+impl NpcMoves {
+    pub fn player_can_move(&self) -> bool {
+        self.npc_moves_remaining == 0 && self.ticks_till_next_npc_move == 0
+    }
+
+    pub fn npc_can_move(&self) -> bool {
+        self.npc_moves_remaining > 0 && self.ticks_till_next_npc_move == 0
+    }
+}
+
+impl Default for NpcMoves {
     fn default() -> Self {
-        // starts with "true" so various update steps will run
-        // in the first timestep, to help initialize the world
-        PlayerHasMoved { player_has_moved: true }
+        NpcMoves {
+            npc_moves_remaining: 0,
+            ticks_till_next_npc_move: 0,
+            // start with true so various update steps will run
+            // in the first timestep, as part of initialization
+            move_was_made: true,
+        }
     }
 }
 

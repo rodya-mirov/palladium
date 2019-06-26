@@ -4,7 +4,7 @@ use quicksilver::input::{ButtonState, Key, Keyboard};
 use specs::Join;
 
 use components::{BlocksMovement, Camera, HasPosition, MapTile, Player};
-use resources::{KeyboardFocus, PlayerHasMoved};
+use resources::{KeyboardFocus, NpcMoves};
 
 use world::{TilePos, WorldState};
 
@@ -18,7 +18,7 @@ pub struct PlayerMoveSystemData<'a> {
     keyboard: ReadExpect<'a, Keyboard>,
     world_state: ReadExpect<'a, WorldState>,
     keyboard_focus: Read<'a, KeyboardFocus>,
-    player_has_moved: Write<'a, PlayerHasMoved>,
+    npc_moves: Write<'a, NpcMoves>,
 }
 
 pub struct PlayerMoveSystem;
@@ -28,6 +28,9 @@ impl<'a> System<'a> for PlayerMoveSystem {
 
     fn run(&mut self, mut data: Self::SystemData) {
         if *data.keyboard_focus != KeyboardFocus::GameMap {
+            return;
+        }
+        if !data.npc_moves.player_can_move() {
             return;
         }
 
@@ -62,7 +65,7 @@ impl<'a> System<'a> for PlayerMoveSystem {
         }
 
         if player_moved {
-            data.player_has_moved.player_has_moved = true;
+            turn_state_helpers::yield_to_npc(&mut data.npc_moves);
         }
     }
 }
