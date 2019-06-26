@@ -19,8 +19,8 @@ pub struct OxygenSpreadSystemData<'a> {
 }
 
 // We do more iterations, with higher capacity, to make oxygen dispersal more "smooth"
-const NUM_ITERATIONS: usize = 10;
-const SHARING_PER_ITERATION: usize = 2;
+const NUM_ITERATIONS: usize = 20;
+const SHARING_PER_ITERATION: usize = 1;
 
 struct OxygenTaker<'b> {
     container: &'b mut OxygenContainer,
@@ -114,7 +114,9 @@ impl<'a> System<'a> for OxygenSpreadSystem {
 
                     let neighbor_capacity = neighbor_capacity.unwrap();
                     *neighbor_capacity -= 1;
-                    taker.container.contents += 1;
+                    if !taker.is_vacuum {
+                        taker.container.contents += 1;
+                    }
 
                     if *neighbor_capacity <= 0 {
                         oxygen_sharing.remove(&neighbor_pos);

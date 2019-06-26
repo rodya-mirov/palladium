@@ -5,7 +5,7 @@ use resources::{GameClock, NpcMoves};
 // how many update frames after a manual move until NPC can move
 // essentially player can do 30 / (this many) taps per second (assuming we're running at 60fps)
 // so keep that in mind
-const TICKS_PER_MANUAL_TURN: usize = 6;
+const TICKS_PER_MANUAL_TURN: usize = 2;
 
 // classic DnD rule says a turn is 6 seconds :shrug:
 const SECONDS_PER_TURN: usize = 6;

@@ -34,7 +34,13 @@ pub fn render_images_corner(
     let mut draw_pos = get_draw_pos(screen_size, images_size, offset, corner);
 
     for image in images {
-        window.draw(&image.area().translate(draw_pos), Img(image));
+        window.draw(
+            &Rectangle {
+                pos: draw_pos,
+                size: image.area().size,
+            },
+            Img(image),
+        );
         match alignment {
             Alignment::Horizontal => {
                 draw_pos.x += image.area().size.x + interior_padding.x;
