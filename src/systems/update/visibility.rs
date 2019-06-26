@@ -14,6 +14,16 @@ use resources::NpcMoves;
 use numerics::Float;
 use world::{TilePos, VisibilityType};
 
+#[derive(SystemData)]
+pub struct VisibilitySystemData<'a> {
+    player: ReadStorage<'a, Player>,
+    has_position: ReadStorage<'a, HasPosition>,
+    blocks_visibility: ReadStorage<'a, BlocksVisibility>,
+    visible: WriteStorage<'a, Visible>,
+
+    npc_moves: Read<'a, NpcMoves>,
+}
+
 pub struct VisibilitySystem;
 
 // We do use a hashmap, but the early stopping rules
@@ -22,24 +32,19 @@ type Visibles<'a> = HashMap<TilePos, Vec<&'a mut Visible>>; // pos -> 1 or more 
 type Occlusions = HashSet<TilePos>;
 
 impl<'a> System<'a> for VisibilitySystem {
-    type SystemData = (
-        ReadStorage<'a, Player>,
-        ReadStorage<'a, HasPosition>,
-        ReadStorage<'a, BlocksVisibility>,
-        WriteStorage<'a, Visible>,
-        Read<'a, NpcMoves>,
-    );
+    type SystemData = VisibilitySystemData<'a>;
 
-    fn run(&mut self, data: Self::SystemData) {
-        let (player, has_pos, blocks_vis, mut vis, player_has_moved) = data;
-
-        if !player_has_moved.move_was_made {
+    fn run(&mut self, mut data: Self::SystemData) {
+        if !data.npc_moves.move_was_made {
             return;
         }
 
-        let occlusions: Occlusions = (&has_pos, &blocks_vis).join().map(|(hp, _)| hp.position).collect();
+        let occlusions: Occlusions = (&data.has_position, &data.blocks_visibility)
+            .join()
+            .map(|(hp, _)| hp.position)
+            .collect();
 
-        let player_pos: TilePos = (&player, &has_pos)
+        let player_pos: TilePos = (&data.player, &data.has_position)
             .join()
             .map(|(_, has_pos)| has_pos.position)
             .next()
@@ -47,7 +52,7 @@ impl<'a> System<'a> for VisibilitySystem {
 
         let mut max_range = 1;
         let mut visibles: Visibles = HashMap::new();
-        for (pos, vis) in (&has_pos, &mut vis).join() {
+        for (pos, vis) in (&data.has_position, &mut data.visible).join() {
             max_range = max(max_range, player_pos.manhattan_distance(pos.position));
             // Note we mark everything as hidden right at the start, so we can do
             // early stopping later
