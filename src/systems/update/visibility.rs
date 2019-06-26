@@ -61,6 +61,8 @@ impl<'a> System<'a> for VisibilitySystem {
         }
 
         // NB: this range is worst case, but if we hit full shadow, we can stop early
+        // the only time we'd actually hit this max range is if we never get to full shadow ("we can see forever")
+        // which is not a good state for this algorithm :dusty-stick:
         refresh_visibility(player_pos, &mut visibles, max_range, &occlusions);
     }
 }

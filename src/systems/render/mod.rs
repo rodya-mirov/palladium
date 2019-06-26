@@ -7,7 +7,11 @@
 
 use super::*;
 
-use quicksilver::{geom::Shape, graphics::Image, lifecycle::Window};
+use quicksilver::{graphics::Image, lifecycle::Window};
+
+use numerics::force_max;
+
+mod image_render_helper;
 
 mod centered_image_renderer;
 mod chars_renderer;
@@ -18,30 +22,3 @@ pub use centered_image_renderer::CenteredVerticalImagesRenderer;
 pub use chars_renderer::{CharsRenderer, CharsRendererSetup};
 pub use controls_renderer::{ControlsRenderer, ControlsRendererSetup};
 pub use oxygen_overlay::{OxygenOverlayRenderer, OxygenOverlaySetup};
-
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
-#[allow(dead_code)] // we want to support all these corners for the future
-enum Corner {
-    UpperLeft,
-    UpperRight,
-    LowerLeft,
-    LowerRight,
-}
-
-fn render_image_corner(window: &mut Window, image: &mut Image, offset: Vector, corner: Corner) {
-    let screen_size = window.screen_size();
-    let image_size = image.area().size();
-
-    let render_pos = get_render_pos_corner(screen_size, image_size, offset, corner);
-
-    window.draw(&image.area().translate(render_pos), Img(&image));
-}
-
-fn get_render_pos_corner(screen_size: Vector, image_size: Vector, offset: Vector, corner: Corner) -> Vector {
-    match corner {
-        Corner::UpperLeft => offset,
-        Corner::UpperRight => Vector::new(screen_size.x - image_size.x - offset.x, offset.y),
-        Corner::LowerLeft => Vector::new(offset.x, screen_size.y - image_size.y - offset.y),
-        Corner::LowerRight => Vector::new(screen_size.x - image_size.x - offset.x, screen_size.y - image_size.y - offset.y),
-    }
-}

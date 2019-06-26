@@ -63,6 +63,23 @@ pub enum HackTarget {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct GameClock {
+    pub hours: usize,
+    pub minutes: usize,
+    pub seconds: usize,
+}
+
+impl Default for GameClock {
+    fn default() -> Self {
+        GameClock {
+            hours: 15,
+            minutes: 12,
+            seconds: 40,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct NpcMoves {
     pub npc_moves_remaining: usize,
     pub ticks_till_next_npc_move: usize,

@@ -13,6 +13,7 @@ pub struct CenteredVerticalImagesRenderer<'a> {
     pub bg_color: Color,
     // applied on top/bottom and left/right
     pub outside_padding: Vector,
+    // applied between images
     pub internal_padding: Vector,
 }
 

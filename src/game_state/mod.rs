@@ -53,7 +53,7 @@ fn make_assets() -> GameAssets {
     }));
 
     // TODO: autogen this list somehow
-    let game_glyphs = "* █d@I`";
+    let game_glyphs = "* █d@I:`0123456789";
     let render_params = GameMapRenderParams::default();
     let tile_size_px = render_params.tile_size_px;
 
@@ -301,6 +301,7 @@ impl State for MainState {
         systems::ControlsRenderer {
             window,
             controls_image: &mut self.assets.controls_image,
+            tileset: &mut self.assets.tileset,
         }
         .run_now(&self.world.res);
 
