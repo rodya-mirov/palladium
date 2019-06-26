@@ -13,9 +13,11 @@ pub struct DoorOpenSystemData<'a> {
     door: WriteStorage<'a, Door>,
     hackable: ReadStorage<'a, Hackable>,
     opens_doors: ReadStorage<'a, OpensDoors>,
+    char_render: WriteStorage<'a, CharRender>,
+
     blocks_airflow: WriteStorage<'a, BlocksAirflow>,
     blocks_movement: WriteStorage<'a, BlocksMovement>,
-    char_render: WriteStorage<'a, CharRender>,
+    blocks_visibility: WriteStorage<'a, BlocksVisibility>,
 
     npc_moves: Read<'a, NpcMoves>,
     entities: Entities<'a>,
@@ -57,6 +59,7 @@ impl<'a> System<'a> for DoorOpenSystem {
 
             if should_open {
                 door.door_state = components::DoorState::Open;
+                data.blocks_visibility.remove(entity);
                 data.blocks_airflow.remove(entity);
                 data.blocks_movement.remove(entity);
             } else if should_close {
@@ -66,6 +69,9 @@ impl<'a> System<'a> for DoorOpenSystem {
                     .expect("The entity should be current");
                 data.blocks_movement
                     .insert(entity, components::BlocksMovement)
+                    .expect("The entity should be current");
+                data.blocks_visibility
+                    .insert(entity, components::BlocksVisibility)
                     .expect("The entity should be current");
             }
 

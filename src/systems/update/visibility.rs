@@ -204,9 +204,9 @@ fn project_tile(row: i32, col: i32) -> Shadow {
     let (row, col) = (row as f32, col as f32);
 
     // slope to the top-left corner of the blocking square
-    let top_left = col / (row + 1.0);
+    let top_left = col / (row + 2.0);
     // slope to the bottom-right corner of the blocking square
-    let bottom_right = (col + 1.0) / (row);
+    let bottom_right = (col + 1.0) / (row + 1.0);
 
     Shadow {
         start: top_left.into(),

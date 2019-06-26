@@ -109,10 +109,10 @@ fn make_update_dispatcher(world: &mut World) -> Dispatcher<'static, 'static> {
         // note: we run everything in sequence, so the dependencies don't matter
         .with(systems::DialogueControlSystem, "dialogue_controls", &[])
         .with(systems::PlayerMoveSystem, "player_move", &[])
-        .with(systems::VisibilitySystem, "visibility", &[])
         .with(systems::ToggleControlSystem, "toggle_controls", &[])
         .with(systems::ToggleHackSystem, "toggle_hack", &[])
         .with(systems::DoorOpenSystem, "door_open", &[])
+        .with(systems::VisibilitySystem, "visibility", &[])
         .with(systems::OxygenSpreadSystem, "oxygen_spread", &[])
         .with(systems::PlayerNotMoved, "player_not_moved", &[])
         .build();
