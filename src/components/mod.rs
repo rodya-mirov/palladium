@@ -17,6 +17,10 @@ pub struct BlocksMovement; // I mean, it's direct
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
 #[storage(NullStorage)]
+pub struct BlocksVisibility; // I mean, it's direct
+
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[storage(NullStorage)]
 pub struct BlocksAirflow; // this is for walls and doors and stuff
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
@@ -33,9 +37,6 @@ pub struct Visible {
     // TODO: probably replace this with a "memory" system (memory entities; so if it's deleted
     // in your absence, you won't know until you see it again)
     pub memorable: bool,
-    // whether the object blocks visibility
-    // TODO: should we pull occludes off into its own component with a NullStorage?
-    pub occludes: bool,
 }
 
 #[derive(Component, Clone)]

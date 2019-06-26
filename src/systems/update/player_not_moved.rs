@@ -1,5 +1,7 @@
 use super::*;
 
+use resources::PlayerHasMoved;
+
 pub struct PlayerNotMoved;
 
 impl<'a> System<'a> for PlayerNotMoved {

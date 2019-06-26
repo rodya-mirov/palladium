@@ -6,9 +6,11 @@
 use super::*;
 
 use std::cmp::max;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-use components::{HasPosition, Player, Visible};
+use components::{BlocksVisibility, HasPosition, Player, Visible};
+use resources::PlayerHasMoved;
+
 use numerics::Float;
 use world::{TilePos, VisibilityType};
 
@@ -17,21 +19,25 @@ pub struct VisibilitySystem;
 // We do use a hashmap, but the early stopping rules
 // technically populating the hashmap doesn't seem ideal, but we can cache later (and really should)
 type Visibles<'a> = HashMap<TilePos, Vec<&'a mut Visible>>; // pos -> 1 or more entities at that position
+type Occlusions = HashSet<TilePos>;
 
 impl<'a> System<'a> for VisibilitySystem {
     type SystemData = (
         ReadStorage<'a, Player>,
         ReadStorage<'a, HasPosition>,
+        ReadStorage<'a, BlocksVisibility>,
         WriteStorage<'a, Visible>,
         Read<'a, PlayerHasMoved>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (player, has_pos, mut vis, player_has_moved) = data;
+        let (player, has_pos, blocks_vis, mut vis, player_has_moved) = data;
 
         if !player_has_moved.player_has_moved {
             return;
         }
+
+        let occlusions: Occlusions = (&has_pos, &blocks_vis).join().map(|(hp, _)| hp.position).collect();
 
         let player_pos: TilePos = (&player, &has_pos)
             .join()
@@ -50,15 +56,7 @@ impl<'a> System<'a> for VisibilitySystem {
         }
 
         // NB: this range is worst case, but if we hit full shadow, we can stop early
-        refresh_visibility(player_pos, &mut visibles, max_range);
-    }
-}
-
-fn is_occluding<'a>(visibles: &mut Visibles<'a>, pos: TilePos) -> bool {
-    if let Some(stuff) = visibles.get(&pos) {
-        stuff.iter().any(|vis| vis.occludes)
-    } else {
-        false
+        refresh_visibility(player_pos, &mut visibles, max_range, &occlusions);
     }
 }
 
@@ -82,20 +80,20 @@ fn cannot_see(vis: &mut Visible) {
     }
 }
 
-fn refresh_visibility<'a>(observer_pos: TilePos, visibles: &mut Visibles<'a>, vis_range: i32) {
+fn refresh_visibility<'a>(observer_pos: TilePos, visibles: &mut Visibles<'a>, vis_range: i32, occlusions: &Occlusions) {
     // You can always see yourself, it just helps sanity
     mark_visible(visibles, observer_pos);
 
     for octant in 0..8 {
-        refresh_octant_vis(observer_pos, octant, visibles, vis_range);
+        refresh_octant_vis(observer_pos, octant, visibles, vis_range, occlusions);
     }
 }
 
 // NB: vis_range MUST include the entire map! Or we will never set the edge of vision to be invisible
 //      in the case where you can no longer see something because it's just too far away
-// PRE: all visibles have been marked "can't currently see"; so there is no need to mark things as invisible
-//      this helps with early stopping!!
-fn refresh_octant_vis<'a>(observer_pos: TilePos, octant: usize, visibles: &mut Visibles<'a>, vis_range: i32) {
+// PRE: all visibles have been marked "can't currently see"; so there is no need to mark things as invisible.
+//      This helps with early stopping.
+fn refresh_octant_vis<'a>(observer_pos: TilePos, octant: usize, visibles: &mut Visibles<'a>, vis_range: i32, occlusions: &Occlusions) {
     let mut line = ShadowLine::default();
 
     for row in 1..vis_range {
@@ -113,7 +111,7 @@ fn refresh_octant_vis<'a>(observer_pos: TilePos, octant: usize, visibles: &mut V
             all_occluded = false;
             mark_visible(visibles, pos);
 
-            if is_occluding(visibles, pos) {
+            if occlusions.contains(&pos) {
                 line.add_shadow(projection);
             }
         }

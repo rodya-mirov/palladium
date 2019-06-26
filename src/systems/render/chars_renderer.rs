@@ -12,7 +12,8 @@ use quicksilver::{
 use specs::Join;
 
 use components::{Camera, CharRender, HasPosition, MapTile, Visible};
-use game_state::GameMapRenderParams;
+use resources::GameMapRenderParams;
+
 use world::{TilePos, VisibilityType, WorldState};
 
 type CharsRendererData<'a> = (

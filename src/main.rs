@@ -18,6 +18,7 @@ use quicksilver::{
 mod components;
 mod game_state;
 mod numerics;
+mod resources;
 mod rng;
 mod skills;
 mod systems;

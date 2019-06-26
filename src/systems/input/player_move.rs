@@ -4,6 +4,8 @@ use quicksilver::input::{ButtonState, Key, Keyboard};
 use specs::Join;
 
 use components::{BlocksMovement, Camera, HasPosition, MapTile, Player};
+use resources::{KeyboardFocus, PlayerHasMoved};
+
 use world::{TilePos, WorldState};
 
 #[derive(SystemData)]

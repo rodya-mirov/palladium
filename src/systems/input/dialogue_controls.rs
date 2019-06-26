@@ -2,8 +2,10 @@
 
 use super::*;
 
+use dialogue_helpers::{end_dialogue, launch_dialogue, DialogueBuilder};
+
 use components::*;
-use game_state::{DialogueCallback, DialogueState, GameIsQuit, HackDialogueCallback, HackTarget, KeyboardFocus, PlayerHasMoved};
+use resources::*;
 
 pub struct DialogueControlSystem;
 

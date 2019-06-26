@@ -3,6 +3,7 @@ use super::*;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use components::{BlocksAirflow, HasPosition, OxygenContainer, Vacuum};
+use resources::PlayerHasMoved;
 
 pub struct OxygenSpreadSystem;
 

@@ -3,6 +3,7 @@ use super::*;
 use std::collections::HashSet;
 
 use components::*;
+use resources::PlayerHasMoved;
 
 pub struct DoorOpenSystem;
 

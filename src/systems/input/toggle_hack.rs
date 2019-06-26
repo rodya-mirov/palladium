@@ -2,8 +2,10 @@
 
 use super::*;
 
+use dialogue_helpers::{launch_dialogue, DialogueBuilder};
+
 use components::*;
-use game_state::{DialogueCallback, HackDialogueCallback, KeyboardFocus};
+use resources::*;
 
 #[derive(SystemData)]
 pub struct ToggleHackSystemData<'a> {

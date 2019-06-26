@@ -2,7 +2,9 @@
 
 use super::*;
 
-use game_state::{DialogueCallback, GameMapDisplayOptions, KeyboardFocus};
+use dialogue_helpers::{launch_dialogue, DialogueBuilder};
+
+use resources::{DialogueCallback, DialogueStateResource, GameMapDisplayOptions, KeyboardFocus};
 
 #[derive(SystemData)]
 pub struct ToggleControlSystemData<'a> {

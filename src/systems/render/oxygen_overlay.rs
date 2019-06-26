@@ -12,7 +12,8 @@ use quicksilver::{
 use specs::Join;
 
 use components::{Camera, HasPosition, OxygenContainer, Visible};
-use game_state::{GameMapDisplayOptions, GameMapRenderParams};
+use resources::{GameMapDisplayOptions, GameMapRenderParams};
+
 use world::{TilePos, VisibilityType};
 
 #[derive(SystemData)]

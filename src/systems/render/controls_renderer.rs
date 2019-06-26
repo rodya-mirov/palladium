@@ -5,7 +5,7 @@ use super::*;
 
 use quicksilver::graphics::Image;
 
-use game_state::{GameMapDisplayOptions, GameMapRenderParams};
+use resources::{GameMapDisplayOptions, GameMapRenderParams};
 
 type ControlersRendererData<'a> = (Read<'a, GameMapRenderParams>, Read<'a, GameMapDisplayOptions>);
 

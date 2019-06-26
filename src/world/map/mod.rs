@@ -120,7 +120,6 @@ impl Map {
                 .with(components::MapTile)
                 .with(components::Visible {
                     visibility: VisibilityType::NotSeen,
-                    occludes: get_occludes(square.square_type),
                     memorable: true,
                 })
                 .with(components::HasPosition {
@@ -135,6 +134,9 @@ impl Map {
                     fg_color: make_fg_color(square.square_type),
                 });
 
+            if get_occludes(square.square_type) {
+                tile_builder = tile_builder.with(components::BlocksVisibility);
+            }
             if get_blocks(square.square_type) {
                 tile_builder = tile_builder.with(components::BlocksMovement);
             }
@@ -172,9 +174,9 @@ impl Map {
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
-                            occludes: true,
                             memorable: true,
                         })
+                        .with(components::BlocksVisibility)
                         .with(components::Door {
                             door_state: components::DoorState::Closed,
                         })
@@ -197,7 +199,6 @@ impl Map {
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
-                            occludes: false,
                             memorable: false,
                         })
                         .with(components::BlocksMovement)
@@ -218,9 +219,9 @@ impl Map {
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
-                            occludes: true,
                             memorable: false,
                         })
+                        .with(components::BlocksVisibility)
                         .with(components::BlocksMovement)
                         .build();
                 }
