@@ -80,8 +80,21 @@ pub struct DialogueOptionState {
 
 #[derive(Clone, Debug)]
 pub enum DialogueCallback {
+    // end current dialogue, return to normal gameplay
     EndDialogue,
+    Hack(HackDialogueCallback),
     QuitGame,
+}
+
+#[derive(Clone, Debug)]
+pub enum HackDialogueCallback {
+    ChooseHackTarget(Entity),
+    InitiateHack(Entity, HackTarget),
+}
+
+#[derive(Clone, Debug)]
+pub enum HackTarget {
+    Door(components::DoorHackState), // door(new_hack_state)
 }
 
 // TODO: move stuff into a resources module
@@ -183,7 +196,7 @@ fn make_assets() -> GameAssets {
     }));
 
     let controls_image = Asset::new(Font::load(game_state::FONT_MONONOKI_PATH).and_then(move |font| {
-        let controls = vec!["[Q]uit", "[C]ontrols", "[L]icenses", "[O]xygen Display"];
+        let controls = vec!["[H]ack", "\n", "[O]xygen Display", "[C]ontrols", "\n", "[L]icenses", "[Q]uit"];
 
         font.render(&(controls.join("\n")), &FontStyle::new(18.0, Color::BLACK))
     }));
@@ -218,10 +231,11 @@ fn make_update_dispatcher(world: &mut World) -> Dispatcher<'static, 'static> {
 
     let mut out = DispatcherBuilder::new()
         // note: we run everything in sequence, so the dependencies don't matter
+        .with(systems::DialogueControlSystem, "dialogue_controls", &[])
         .with(systems::PlayerMoveSystem, "player_move", &[])
         .with(systems::VisibilitySystem, "visibility", &[])
         .with(systems::ToggleControlSystem, "toggle_controls", &[])
-        .with(systems::DialogueControlSystem, "dialogue_controls", &[])
+        .with(systems::ToggleHackSystem, "toggle_hack", &[])
         .with(systems::DoorOpenSystem, "door_open", &[])
         .with(systems::OxygenSpreadSystem, "oxygen_spread", &[])
         .with(systems::PlayerNotMoved, "player_not_moved", &[])

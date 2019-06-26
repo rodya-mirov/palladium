@@ -162,6 +162,10 @@ impl Map {
                     world
                         .create_entity()
                         .with(components::HasPosition { position: pos })
+                        .with(components::Hackable {
+                            name: "Door",
+                            hack_state: components::HackState::Door(components::DoorHackState::Uncompromised),
+                        })
                         .with(components::CharRender {
                             glyph: 'd',
                             fg_color: Color::WHITE,

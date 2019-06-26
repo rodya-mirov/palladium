@@ -2,16 +2,20 @@
 
 use super::*;
 
-use game_state::{DialogueCallback, DialogueState, GameIsQuit, KeyboardFocus};
+use components::*;
+use game_state::{DialogueCallback, DialogueState, GameIsQuit, HackDialogueCallback, HackTarget, KeyboardFocus, PlayerHasMoved};
 
 pub struct DialogueControlSystem;
 
 #[derive(SystemData)]
 pub struct DialogueControlSystemData<'a> {
+    hackable: WriteStorage<'a, Hackable>,
+
     keyboard: ReadExpect<'a, Keyboard>,
     game_is_quit: Write<'a, GameIsQuit>,
     keyboard_focus: Write<'a, KeyboardFocus>,
     dialogue_state_resource: Write<'a, DialogueStateResource>,
+    player_has_moved: Write<'a, PlayerHasMoved>,
 }
 
 const ACCEPT_KEYS: [Key; 2] = [Key::Space, Key::Return];
@@ -31,8 +35,10 @@ impl<'a> System<'a> for DialogueControlSystem {
         } else if ACCEPT_KEYS.iter().any(|key| data.keyboard[*key] == ButtonState::Pressed) {
             let new_dsr = user_selected(
                 get_state(&mut data.dialogue_state_resource),
+                &mut data.hackable,
                 &mut data.keyboard_focus,
                 &mut data.game_is_quit,
+                &mut data.player_has_moved,
             );
             *data.dialogue_state_resource = new_dsr;
         }
@@ -55,16 +61,27 @@ fn user_down(dsr: &mut DialogueState) {
     }
 }
 
-fn user_selected(dsr: &mut DialogueState, focus: &mut KeyboardFocus, game_is_quit: &mut GameIsQuit) -> DialogueStateResource {
+fn user_selected(
+    dsr: &mut DialogueState,
+    hackable: &mut WriteStorage<'_, Hackable>,
+    focus: &mut KeyboardFocus,
+    game_is_quit: &mut GameIsQuit,
+    player_has_moved: &mut PlayerHasMoved,
+) -> DialogueStateResource {
     let mut new_dsr = DialogueStateResource {
         is_initialized: InitializationState::Finished,
         state: Some(dsr.clone()),
     };
 
-    for callback in &dsr.options[dsr.selected_index].callbacks {
+    // Note: it's fine to drain these callbacks off, because we're deleting this dsr
+    // and replacing it.
+    for callback in dsr.options[dsr.selected_index].callbacks.drain(0..) {
         match callback {
             DialogueCallback::EndDialogue => {
                 end_dialogue(focus, &mut new_dsr);
+            }
+            DialogueCallback::Hack(hack_callback) => {
+                handle_hack_callback(hack_callback, hackable, player_has_moved, focus, &mut new_dsr);
             }
             DialogueCallback::QuitGame => {
                 game_is_quit.0 = true;
@@ -73,4 +90,89 @@ fn user_selected(dsr: &mut DialogueState, focus: &mut KeyboardFocus, game_is_qui
     }
 
     new_dsr
+}
+
+fn handle_hack_callback(
+    hack_callback: HackDialogueCallback,
+    hackable: &mut WriteStorage<'_, Hackable>,
+    player_has_moved: &mut PlayerHasMoved,
+    focus: &mut KeyboardFocus,
+    dialogue_state: &mut DialogueStateResource,
+) {
+    match hack_callback {
+        HackDialogueCallback::InitiateHack(entity, hack_target) => {
+            let hackable = hackable
+                .get_mut(entity)
+                .expect("If we initiated hack on an entity, it better be hackable");
+
+            match &mut hackable.hack_state {
+                HackState::Door(ref mut door_hack_state) => {
+                    let HackTarget::Door(new_hack_state) = hack_target;
+                    *door_hack_state = new_hack_state;
+                }
+            }
+
+            player_has_moved.player_has_moved = true;
+        }
+        HackDialogueCallback::ChooseHackTarget(entity) => {
+            let hackable = hackable
+                .get_mut(entity)
+                .expect("If we initiated hack on an entity, it better be hackable");
+
+            let mut builder = DialogueBuilder::new(&format!("Hacking {}...", hackable.name));
+
+            let HackState::Door(door_hack_state) = &hackable.hack_state;
+            match door_hack_state {
+                DoorHackState::Uncompromised => {
+                    builder = builder.with_option(
+                        "[Compromise]",
+                        vec![
+                            DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                entity,
+                                HackTarget::Door(DoorHackState::CompromisedNormal),
+                            )),
+                            DialogueCallback::EndDialogue,
+                        ],
+                    );
+                }
+                DoorHackState::CompromisedNormal | DoorHackState::CompromisedOpen | DoorHackState::CompromisedShut => {
+                    builder = builder
+                        .with_option(
+                            "[Lock Shut]",
+                            vec![
+                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                    entity,
+                                    HackTarget::Door(DoorHackState::CompromisedShut),
+                                )),
+                                DialogueCallback::EndDialogue,
+                            ],
+                        )
+                        .with_option(
+                            "[Lock Open]",
+                            vec![
+                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                    entity,
+                                    HackTarget::Door(DoorHackState::CompromisedOpen),
+                                )),
+                                DialogueCallback::EndDialogue,
+                            ],
+                        )
+                        .with_option(
+                            "[Restore Normal Operations]",
+                            vec![
+                                DialogueCallback::Hack(HackDialogueCallback::InitiateHack(
+                                    entity,
+                                    HackTarget::Door(DoorHackState::CompromisedNormal),
+                                )),
+                                DialogueCallback::EndDialogue,
+                            ],
+                        );
+                }
+            }
+
+            builder = builder.with_option("[Cancel]", vec![DialogueCallback::EndDialogue]);
+
+            launch_dialogue(builder, focus, dialogue_state);
+        }
+    }
 }

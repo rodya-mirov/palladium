@@ -105,7 +105,7 @@ impl<'a> System<'a> for OxygenSpreadSystem {
                 }
                 let taker = taker.unwrap();
 
-                for neighbor_pos in neighbors(taker.has_pos.position).iter() {
+                for neighbor_pos in full_neighbors(taker.has_pos.position).iter() {
                     let neighbor_capacity = oxygen_sharing.get_mut(neighbor_pos);
                     if neighbor_capacity.is_none() {
                         continue;

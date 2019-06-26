@@ -97,7 +97,17 @@ fn launch_dialogue(builder: DialogueBuilder, focus: &mut KeyboardFocus, dialogue
     };
 }
 
-fn neighbors(pos: TilePos) -> [TilePos; 9] {
+fn direct_neighbors(pos: TilePos) -> [TilePos; 5] {
+    [
+        pos,
+        TilePos { x: pos.x - 1, y: pos.y },
+        TilePos { x: pos.x, y: pos.y - 1 },
+        TilePos { x: pos.x, y: pos.y + 1 },
+        TilePos { x: pos.x + 1, y: pos.y },
+    ]
+}
+
+fn full_neighbors(pos: TilePos) -> [TilePos; 9] {
     [
         pos,
         TilePos {

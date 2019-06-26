@@ -17,7 +17,7 @@ pub struct BlocksMovement; // I mean, it's direct
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
 #[storage(NullStorage)]
-pub struct BlocksAirflow; // walls and doors and stuff
+pub struct BlocksAirflow; // this is for walls and doors and stuff
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
 #[storage(NullStorage)]
@@ -30,12 +30,33 @@ pub struct Visible {
     pub visibility: VisibilityType,
     // If true, the object is marked as "remembered" if you saw it once, but can't anymore
     // This should not be used for objects that move
-    // TODO: probably replace this with a "memory" system (memory entities; so if it's delete
+    // TODO: probably replace this with a "memory" system (memory entities; so if it's deleted
     // in your absence, you won't know until you see it again)
     pub memorable: bool,
     // whether the object blocks visibility
     // TODO: should we pull occludes off into its own component with a NullStorage?
     pub occludes: bool,
+}
+
+#[derive(Component, Clone)]
+#[storage(HashMapStorage)]
+pub struct Hackable {
+    // name, as it appears on the hackable menu; probably not unique
+    pub name: &'static str,
+    pub hack_state: HackState,
+}
+
+#[derive(Clone, Debug)]
+pub enum HackState {
+    Door(DoorHackState),
+}
+
+#[derive(Clone, Debug)]
+pub enum DoorHackState {
+    Uncompromised,
+    CompromisedNormal,
+    CompromisedShut,
+    CompromisedOpen,
 }
 
 #[derive(Component, Debug, Copy, Clone, PartialEq)]
