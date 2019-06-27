@@ -8,7 +8,7 @@ use quicksilver::{
     lifecycle::Window,
     load_file, Future,
 };
-use specs::{Builder, Dispatcher, DispatcherBuilder};
+use specs::Builder;
 
 use resources::*;
 use world::{Map, MapGenerationParams, TilePos, WorldState};
@@ -16,8 +16,6 @@ use world::{Map, MapGenerationParams, TilePos, WorldState};
 pub struct MainState {
     world: World,
     assets: GameAssets,
-
-    update_dispatcher: Dispatcher<'static, 'static>,
 }
 
 pub struct GameAssets {
@@ -93,33 +91,39 @@ fn make_text_image(text: String, color: Color) -> Asset<Image> {
     Asset::new(Font::load(game_state::FONT_MONONOKI_PATH).and_then(move |font| font.render(&text, &FontStyle::new(18.0, color))))
 }
 
-fn make_update_dispatcher(world: &mut World) -> Dispatcher<'static, 'static> {
-    let mut render_dispatcher: Dispatcher = DispatcherBuilder::new()
-        // fake/noop systems; used to make sure certain components are set up
-        // since the actual render system isn't dispatched
-        .with(systems::CharsRendererSetup, "chars_render", &[])
-        .with(systems::ControlsRendererSetup, "controls_render", &[])
-        .with(systems::OxygenOverlaySetup, "oxygen_render", &[])
-        .build();
+fn setup<'a, T: System<'a>>(sys: &mut T, world: &mut World) {
+    sys.setup(&mut world.res);
+}
 
-    // we don't need to keep this dispatcher, just call setup on it
-    render_dispatcher.setup(&mut world.res);
+fn run_now<'a, T: System<'a>>(sys: &mut T, world: &'a World) {
+    sys.run_now(&world.res);
+}
 
-    let mut out = DispatcherBuilder::new()
-        // note: we run everything in sequence, so the dependencies don't matter
-        .with(systems::DialogueControlSystem, "dialogue_controls", &[])
-        .with(systems::PlayerMoveSystem, "player_move", &[])
-        .with(systems::ToggleControlSystem, "toggle_controls", &[])
-        .with(systems::ToggleHackSystem, "toggle_hack", &[])
-        .with(systems::DoorOpenSystem, "door_open", &[])
-        .with(systems::VisibilitySystem, "visibility", &[])
-        .with(systems::OxygenSpreadSystem, "oxygen_spread", &[])
-        .with(systems::PlayerNotMoved, "player_not_moved", &[])
-        .build();
+macro_rules! systems {
+    ($method_name:ident, $world_name:ident) => {
+        // No-op systems for setting up render resources
+        $method_name(&mut systems::CharsRendererSetup, $world_name);
+        $method_name(&mut systems::ControlsRendererSetup, $world_name);
+        $method_name(&mut systems::OxygenOverlaySetup, $world_name);
 
-    out.setup(&mut world.res);
+        // important update systems; order matters, be careful
+        $method_name(&mut systems::DialogueControlSystem, $world_name);
+        $method_name(&mut systems::PlayerMoveSystem, $world_name);
+        $method_name(&mut systems::ToggleControlSystem, $world_name);
+        $method_name(&mut systems::ToggleHackSystem, $world_name);
+        $method_name(&mut systems::DoorOpenSystem, $world_name);
+        $method_name(&mut systems::VisibilitySystem, $world_name);
+        $method_name(&mut systems::OxygenSpreadSystem, $world_name);
+        $method_name(&mut systems::PlayerNotMoved, $world_name);
+    };
+}
 
-    out
+fn setup_systems(world: &mut World) {
+    systems!(setup, world);
+}
+
+fn run_systems(world: &World) {
+    systems!(run_now, world);
 }
 
 impl MainState {
@@ -227,8 +231,7 @@ impl State for MainState {
         let mut world = World::new();
 
         let assets = make_assets();
-
-        let update_dispatcher = make_update_dispatcher(&mut world);
+        setup_systems(&mut world);
 
         let _player = world
             .create_entity()
@@ -256,11 +259,7 @@ impl State for MainState {
             .with(components::Camera { x_rad: 15, y_rad: 15 })
             .build();
 
-        Ok(MainState {
-            world,
-            assets,
-            update_dispatcher,
-        })
+        Ok(MainState { world, assets })
     }
 
     fn update(&mut self, window: &mut Window) -> QsResult<()> {
@@ -275,7 +274,7 @@ impl State for MainState {
             return Ok(());
         }
 
-        self.update_dispatcher.run_now(&self.world.res);
+        run_systems(&self.world);
 
         Ok(())
     }

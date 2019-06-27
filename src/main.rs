@@ -1,5 +1,6 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_range_loop)]
+#![deny(clippy::print_stdout)]
 
 #[macro_use]
 extern crate specs_derive;
@@ -29,5 +30,6 @@ fn main() {
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         ..Default::default()
     };
+
     run::<game_state::MainState>("Palladium", Vector::new(800, 600), settings);
 }
