@@ -52,21 +52,15 @@ pub struct Hackable {
 
 #[derive(Clone, Debug)]
 pub enum HackState {
-    Door(DoorHackState),
-}
-
-#[derive(Clone, Debug)]
-pub enum DoorHackState {
     Uncompromised,
-    CompromisedNormal,
-    CompromisedShut,
-    CompromisedOpen,
+    Compromised,
 }
 
 #[derive(Component, Debug, Copy, Clone, PartialEq)]
 #[storage(VecStorage)]
 pub struct CharRender {
     pub glyph: char,
+    pub disabled: bool,
     pub z_level: ZLevel,
     pub bg_color: Color, // use a:0 for no background
     pub fg_color: Color,
@@ -125,12 +119,23 @@ pub struct Vacuum; // oxygen container which destroys all its oxygen each timest
 #[storage(HashMapStorage)]
 pub struct Door {
     pub door_state: DoorState,
+    pub door_behavior: DoorBehavior,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum DoorState {
     Open,
     Closed,
+}
+
+#[allow(dead_code)] // Leaving these in as I sort of want to use them later, but not yet
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum DoorBehavior {
+    FullAuto,
+    AutoOpen,
+    AutoClose,
+    StayClosed,
+    StayOpen,
 }
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]

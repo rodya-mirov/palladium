@@ -106,10 +106,8 @@ fn hackable_name(hackable: &Hackable, dir: Direction) -> String {
     let dir_string = to_string(dir);
 
     match &hackable.hack_state {
-        HackState::Door(DoorHackState::Uncompromised) => format!("[{} ({})]", hackable.name, dir_string),
-        HackState::Door(DoorHackState::CompromisedNormal) => format!("[{} (compromised) ({})]", hackable.name, dir_string),
-        HackState::Door(DoorHackState::CompromisedOpen) => format!("[{} (compromised: locked open) ({})]", hackable.name, dir_string),
-        HackState::Door(DoorHackState::CompromisedShut) => format!("[{} (compromised: locked shut) ({})]", hackable.name, dir_string),
+        HackState::Uncompromised => format!("[{} ({})]", hackable.name, dir_string),
+        HackState::Compromised => format!("[{} (compromised) ({})]", hackable.name, dir_string),
     }
 }
 

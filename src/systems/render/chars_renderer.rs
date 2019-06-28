@@ -111,6 +111,10 @@ fn draw_drawable(
     tileset: &HashMap<char, Image>,
     window: &mut Window,
 ) {
+    if glyph_comp.disabled {
+        return;
+    }
+
     let render_pos = get_render_pos(position.x, position.y, camera_bounds, *render_params);
     let image = tileset
         .get(&glyph_comp.glyph)

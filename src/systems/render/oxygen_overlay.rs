@@ -84,23 +84,23 @@ impl<'a, 'b> System<'a> for OxygenOverlayRenderer<'b> {
 }
 
 fn to_color(oxygen_content: usize) -> Color {
-    let a = {
+    let (r, b) = {
         if oxygen_content <= 10 {
-            0.5
-        } else if oxygen_content <= 20 {
-            0.4
-        } else if oxygen_content <= 30 {
-            0.3
-        } else if oxygen_content <= 40 {
-            0.2
-        } else if oxygen_content <= 50 {
-            0.1
+            (1.0, 0.0)
+        } else if oxygen_content < 20 {
+            (0.8, 0.2)
+        } else if oxygen_content < 30 {
+            (0.6, 0.4)
+        } else if oxygen_content < 40 {
+            (0.4, 0.6)
+        } else if oxygen_content < 50 {
+            (0.2, 0.8)
         } else {
-            0.0
+            (0.0, 1.0)
         }
     };
 
-    Color { r: 1.0, g: 0.0, b: 0.0, a }
+    Color { r, b, g: 0.0, a: 0.6 }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]

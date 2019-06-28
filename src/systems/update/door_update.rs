@@ -11,7 +11,6 @@ pub struct DoorOpenSystem;
 pub struct DoorOpenSystemData<'a> {
     has_position: ReadStorage<'a, HasPosition>,
     door: WriteStorage<'a, Door>,
-    hackable: ReadStorage<'a, Hackable>,
     opens_doors: ReadStorage<'a, OpensDoors>,
     char_render: WriteStorage<'a, CharRender>,
 
@@ -31,6 +30,7 @@ impl<'a> System<'a> for DoorOpenSystem {
             return;
         }
 
+        // All the squares which have a DoorOpen component on them
         let mut has_door_open = HashSet::new();
 
         for (_, has_pos) in (&data.opens_doors, &data.has_position).join() {
@@ -38,30 +38,27 @@ impl<'a> System<'a> for DoorOpenSystem {
         }
 
         for (mut door, has_pos, entity) in (&mut data.door, &data.has_position, &data.entities).join() {
-            let mut should_open = full_neighbors(has_pos.position).iter().any(|pos| has_door_open.contains(&pos));
-            let mut should_close = !should_open;
+            let has_adjacent = full_neighbors(has_pos.position).iter().any(|pos| has_door_open.contains(&pos));
+            let renderable = data.char_render.get_mut(entity);
 
-            if let Some(hackable) = &data.hackable.get(entity) {
-                let HackState::Door(door_hack_state) = &hackable.hack_state;
-                match door_hack_state {
-                    DoorHackState::CompromisedNormal => {}
-                    DoorHackState::Uncompromised => {}
-                    DoorHackState::CompromisedOpen => {
-                        should_open = true;
-                        should_close = false;
-                    }
-                    DoorHackState::CompromisedShut => {
-                        should_open = false;
-                        should_close = true;
-                    }
-                }
-            }
+            let (should_open, should_close) = match door.door_behavior {
+                DoorBehavior::FullAuto => (has_adjacent, !has_adjacent),
+                DoorBehavior::AutoOpen => (has_adjacent, false),
+                DoorBehavior::AutoClose => (false, !has_adjacent),
+                DoorBehavior::StayOpen => (true, false),
+                DoorBehavior::StayClosed => (false, true),
+            };
 
-            if should_open {
+            if should_open && should_close {
+                // do nothing
+            } else if should_open {
                 door.door_state = components::DoorState::Open;
                 data.blocks_visibility.remove(entity);
                 data.blocks_airflow.remove(entity);
                 data.blocks_movement.remove(entity);
+                if let Some(renderable) = renderable {
+                    renderable.disabled = true;
+                }
             } else if should_close {
                 door.door_state = components::DoorState::Closed;
                 data.blocks_airflow
@@ -73,13 +70,8 @@ impl<'a> System<'a> for DoorOpenSystem {
                 data.blocks_visibility
                     .insert(entity, components::BlocksVisibility)
                     .expect("The entity should be current");
-            }
-
-            if let Some(renderable) = data.char_render.get_mut(entity) {
-                if should_open {
-                    renderable.fg_color = CLEAR;
-                } else {
-                    renderable.fg_color = Color::WHITE;
+                if let Some(renderable) = renderable {
+                    renderable.disabled = false;
                 }
             }
         }

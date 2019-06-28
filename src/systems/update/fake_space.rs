@@ -64,6 +64,7 @@ impl<'a> System<'a> for FakeSpaceInserterSystem {
                         fg_color: Color::BLACK,
                         glyph: ' ',
                         z_level: ZLevel::NegativeInfinity,
+                        disabled: false,
                     })
                     .build();
             }

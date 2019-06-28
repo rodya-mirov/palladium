@@ -150,6 +150,7 @@ impl Map {
                         z_level: components::ZLevel::Floor,
                         bg_color: make_bg_color(kind),
                         fg_color: make_fg_color(kind),
+                        disabled: false,
                     });
 
                 if get_occludes(kind) {
@@ -183,13 +184,14 @@ impl Map {
                         .with(components::HasPosition { position: pos })
                         .with(components::Hackable {
                             name: "Door",
-                            hack_state: components::HackState::Door(components::DoorHackState::Uncompromised),
+                            hack_state: components::HackState::Uncompromised,
                         })
                         .with(components::CharRender {
                             glyph: 'd',
                             z_level: components::ZLevel::OnFloor,
                             bg_color: CLEAR,
                             fg_color: Color::WHITE,
+                            disabled: false,
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
@@ -197,6 +199,7 @@ impl Map {
                         })
                         .with(components::BlocksVisibility)
                         .with(components::Door {
+                            door_behavior: components::DoorBehavior::FullAuto,
                             door_state: components::DoorState::Closed,
                         })
                         .with(components::BlocksAirflow)
@@ -209,13 +212,14 @@ impl Map {
                         .with(components::HasPosition { position: pos })
                         .with(components::Hackable {
                             name: "Airlock",
-                            hack_state: components::HackState::Door(components::DoorHackState::CompromisedShut),
+                            hack_state: components::HackState::Uncompromised,
                         })
                         .with(components::CharRender {
                             glyph: 'A',
                             z_level: components::ZLevel::OnFloor,
                             bg_color: CLEAR,
                             fg_color: Color::WHITE,
+                            disabled: false,
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
@@ -223,6 +227,7 @@ impl Map {
                         })
                         .with(components::BlocksVisibility)
                         .with(components::Door {
+                            door_behavior: components::DoorBehavior::StayClosed,
                             door_state: components::DoorState::Closed,
                         })
                         .with(components::BlocksAirflow)
@@ -243,6 +248,7 @@ impl Map {
                                 b: 0.7,
                                 a: 1.0,
                             },
+                            disabled: false,
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
@@ -265,6 +271,7 @@ impl Map {
                                 b: 1.0,
                                 a: 1.0,
                             },
+                            disabled: false,
                         })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,

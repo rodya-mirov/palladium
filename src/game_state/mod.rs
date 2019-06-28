@@ -254,6 +254,7 @@ impl State for MainState {
                 z_level: components::ZLevel::OnFloor,
                 bg_color: CLEAR,
                 fg_color: quicksilver::graphics::Color::MAGENTA,
+                disabled: false,
             })
             .with(components::OpensDoors)
             .with(components::Visible {

@@ -1,5 +1,7 @@
 use super::*;
 
+use std::collections::VecDeque;
+
 #[derive(Clone, Debug)]
 pub struct DialogueStateResource {
     pub is_initialized: InitializationState,
@@ -47,19 +49,25 @@ pub enum DialogueCallback {
 
 #[derive(Clone, Debug)]
 pub enum HackDialogueCallback {
-    ChooseHackTarget {
-        entity: Entity,
-    },
-    InitiateHack {
-        entity: Entity,
-        target: HackTarget,
-        turn_duration: usize,
-    },
+    // when you select a hack target and you need to see a more specific menu about
+    // how you want to hack it
+    ChooseHackTarget { entity: Entity },
+    // when you actually select the hack type and start hacking
+    InitiateHack { target: HackTarget, turn_duration: usize },
 }
 
 #[derive(Clone, Debug)]
-pub enum HackTarget {
-    Door { new_hack_state: components::DoorHackState },
+pub struct HackTarget {
+    pub entity: Entity,
+    pub hack_type: HackType,
+}
+
+#[derive(Clone, Debug)]
+pub enum HackType {
+    // things must be compromised before then can be messed with
+    Compromise,
+    // set the behavior of a door
+    Door { new_door_behavior: components::DoorBehavior },
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -163,4 +171,15 @@ impl Default for GameMapRenderParams {
             controls_image_offset_px: Vector::new(30.0, 30.0),
         }
     }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct QueuedPlayerActions {
+    pub action_queue: VecDeque<QueuedPlayerAction>,
+}
+
+#[derive(Clone, Debug)]
+pub enum QueuedPlayerAction {
+    Wait,
+    Hack { target: HackTarget },
 }
