@@ -96,7 +96,7 @@ fn make_random_rooms(params: &MapGenerationParams, rng: &mut PalladRng) -> Vec<R
     rooms
 }
 
-fn make_raw_square(square_type: SquareType) -> Square {
+fn make_raw_square(square_type: GenSquareType) -> Square {
     Square { square_type }
 }
 
@@ -111,7 +111,7 @@ pub struct MapGenResult {
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub struct Square {
-    pub square_type: SquareType,
+    pub square_type: GenSquareType,
 }
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
@@ -119,11 +119,16 @@ pub enum GeneratedEntity {
     Rubbish(TilePos),
     Pillar(TilePos),
     Door(TilePos),
+    Airlock(TilePos),
 }
 
 impl MapGenResult {
+    fn check_index(&self, x: usize, y: usize) -> bool {
+        x < self.width && y < self.height
+    }
+
     fn index(&self, x: usize, y: usize) -> usize {
-        if x >= self.width || y >= self.height {
+        if !self.check_index(x, y) {
             panic!(
                 "MapGen: Invalid x/y: x: {}, y: {}, width: {}, height: {}",
                 x, y, self.width, self.height
@@ -137,12 +142,21 @@ impl MapGenResult {
         let ind = self.index(x, y);
         self.cells[ind] = square;
     }
+
+    fn get_square(&mut self, x: usize, y: usize) -> Option<Square> {
+        if !self.check_index(x, y) {
+            None
+        } else {
+            let ind = self.index(x, y);
+            Some(self.cells[ind])
+        }
+    }
 }
 
 pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
-    let open = make_raw_square(SquareType::Open);
-    let floor = make_raw_square(SquareType::Floor);
-    let wall = make_raw_square(SquareType::Wall);
+    let open = make_raw_square(GenSquareType::Open);
+    let floor = make_raw_square(GenSquareType::Floor);
+    let wall = make_raw_square(GenSquareType::Wall);
 
     let width = params.map_dimensions.map_width;
     let height = params.map_dimensions.map_height;
@@ -161,16 +175,6 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
         others: Vec::new(),
     };
 
-    for x in 0..width {
-        map.set_square(x, 0, wall);
-        map.set_square(x, height - 1, wall);
-    }
-
-    for y in 0..height {
-        map.set_square(0, y, wall);
-        map.set_square(width - 1, y, wall);
-    }
-
     let mut rng = make_rng(seed);
 
     let rooms = make_random_rooms(params, &mut rng);
@@ -182,7 +186,21 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
         }
 
         for y in room.top..=room.bottom {
-            map.set_square(room.left, y, wall);
+            if (room.left == 0
+                || map.get_square(room.left - 1, y)
+                    == Some(Square {
+                        square_type: GenSquareType::Open,
+                    }))
+                && rng.gen_range(1, 10) == 1
+            {
+                map.set_square(room.left, y, floor);
+                map.others.push(GeneratedEntity::Airlock(TilePos {
+                    x: room.left as i32,
+                    y: y as i32,
+                }));
+            } else {
+                map.set_square(room.left, y, wall);
+            }
             map.set_square(room.right, y, wall);
         }
 
@@ -195,14 +213,7 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
                     map.others.push(GeneratedEntity::Pillar(TilePos { x: x as i32, y: y as i32 }));
                 };
 
-                let next_square = {
-                    if rng.gen_range(1, 101) == 1 {
-                        open
-                    } else {
-                        floor
-                    }
-                };
-                map.set_square(x, y, next_square);
+                map.set_square(x, y, floor);
             }
         }
     }

@@ -4,6 +4,7 @@ use specs::{Read, ReadExpect, ReadStorage, System, Write, WriteStorage};
 
 use world::TilePos;
 
+mod camera_helpers;
 mod dialogue_helpers;
 mod turn_state_helpers;
 

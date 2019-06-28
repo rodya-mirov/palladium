@@ -25,6 +25,13 @@ mod skills;
 mod systems;
 mod world;
 
+const CLEAR: Color = Color {
+    r: 1.0,
+    g: 1.0,
+    b: 1.0,
+    a: 0.0,
+};
+
 fn main() {
     let settings = Settings {
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,

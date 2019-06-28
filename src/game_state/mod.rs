@@ -44,24 +44,25 @@ pub struct DialogueOptionAsset {
 pub const FONT_MONONOKI_PATH: &str = "fonts/mononoki/mononoki-Regular.ttf";
 pub const FONT_SQUARE_PATH: &str = "fonts/square/square.ttf";
 
+// TODO: autogen this list somehow
+pub const ALL_GAME_GLYPHS: &str = "* █aAdD@I:`0123456789";
+
 fn make_assets() -> GameAssets {
     let world_params: Asset<MapGenerationParams> = Asset::new(load_file("config/map_params.ron").and_then(move |bytes| {
         let map_gen_params = ron::de::from_bytes(&bytes).expect("Should deserialize");
         Ok(map_gen_params)
     }));
 
-    // TODO: autogen this list somehow
-    let game_glyphs = "* █d@I:`0123456789";
     let render_params = GameMapRenderParams::default();
     let tile_size_px = render_params.tile_size_px;
 
     let tileset = Asset::new(Font::load(game_state::FONT_SQUARE_PATH).and_then(move |text| {
         let tiles = text
-            .render(game_glyphs, &FontStyle::new(tile_size_px.y, Color::WHITE))
+            .render(ALL_GAME_GLYPHS, &FontStyle::new(tile_size_px.y, Color::WHITE))
             .expect("Could not render the font tileset");
 
         let mut tileset = HashMap::new();
-        for (index, glyph) in game_glyphs.chars().enumerate() {
+        for (index, glyph) in ALL_GAME_GLYPHS.chars().enumerate() {
             let pos = (index as i32 * tile_size_px.x as i32, 0);
             let tile = tiles.subimage(Rectangle::new(pos, tile_size_px));
             tileset.insert(glyph, tile);
@@ -95,8 +96,12 @@ fn setup<'a, T: System<'a>>(sys: &mut T, world: &mut World) {
     sys.setup(&mut world.res);
 }
 
-fn run_now<'a, T: System<'a>>(sys: &mut T, world: &'a World) {
+fn run_now<'a, T>(sys: &mut T, world: &'a mut World)
+where
+    T: for<'b> System<'b>,
+{
     sys.run_now(&world.res);
+    world.maintain();
 }
 
 macro_rules! systems {
@@ -109,6 +114,7 @@ macro_rules! systems {
         // important update systems; order matters, be careful
         $method_name(&mut systems::DialogueControlSystem, $world_name);
         $method_name(&mut systems::PlayerMoveSystem, $world_name);
+        $method_name(&mut systems::FakeSpaceInserterSystem, $world_name);
         $method_name(&mut systems::ToggleControlSystem, $world_name);
         $method_name(&mut systems::ToggleHackSystem, $world_name);
         $method_name(&mut systems::DoorOpenSystem, $world_name);
@@ -122,7 +128,7 @@ fn setup_systems(world: &mut World) {
     systems!(setup, world);
 }
 
-fn run_systems(world: &World) {
+fn run_systems(world: &mut World) {
     systems!(run_now, world);
 }
 
@@ -241,6 +247,8 @@ impl State for MainState {
             })
             .with(components::CharRender {
                 glyph: '@',
+                z_level: components::ZLevel::OnFloor,
+                bg_color: CLEAR,
                 fg_color: quicksilver::graphics::Color::MAGENTA,
             })
             .with(components::OpensDoors)
@@ -274,7 +282,7 @@ impl State for MainState {
             return Ok(());
         }
 
-        run_systems(&self.world);
+        run_systems(&mut self.world);
 
         Ok(())
     }
@@ -283,6 +291,8 @@ impl State for MainState {
         if !(self.ensure_initialized()?) {
             return Ok(());
         }
+
+        window.set_blend_mode(quicksilver::graphics::BlendMode::Additive)?;
 
         let bg_color = Color::from_hex("556887");
         window.clear(bg_color)?;

@@ -11,6 +11,13 @@ pub struct HasPosition {
     pub position: TilePos,
 }
 
+// Used to represent "deep space" -- but these are deleted and recreated every timestep
+// so need to be visible && renderable && have a position but aren't really meaningful
+// from a game system perspective; space is everywhere but these only exist in the camera zone
+#[derive(Component, Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[storage(NullStorage)]
+pub struct ImaginaryVisibleTile;
+
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
 #[storage(NullStorage)]
 pub struct BlocksMovement; // I mean, it's direct
@@ -22,10 +29,6 @@ pub struct BlocksVisibility; // I mean, it's direct
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
 #[storage(NullStorage)]
 pub struct BlocksAirflow; // this is for walls and doors and stuff
-
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
-#[storage(NullStorage)]
-pub struct MapTile; // Only used to mark "this is a map tile, so it's cached and stuff" for efficiency
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
 #[storage(VecStorage)]
@@ -64,7 +67,39 @@ pub enum DoorHackState {
 #[storage(VecStorage)]
 pub struct CharRender {
     pub glyph: char,
+    pub z_level: ZLevel,
+    pub bg_color: Color, // use a:0 for no background
     pub fg_color: Color,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum ZLevel {
+    // easy enough to add more here; these are only used for sorting
+    NegativeInfinity,
+    Floor,
+    OnFloor,
+}
+
+impl ZLevel {
+    fn to_num(self) -> i32 {
+        match self {
+            ZLevel::NegativeInfinity => -5,
+            ZLevel::Floor => 0,
+            ZLevel::OnFloor => 1,
+        }
+    }
+}
+
+impl Ord for ZLevel {
+    fn cmp(&self, other: &ZLevel) -> std::cmp::Ordering {
+        self.to_num().cmp(&other.to_num())
+    }
+}
+
+impl PartialOrd for ZLevel {
+    fn partial_cmp(&self, other: &ZLevel) -> Option<std::cmp::Ordering> {
+        Some(self.to_num().cmp(&other.to_num()))
+    }
 }
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]

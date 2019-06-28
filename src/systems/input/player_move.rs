@@ -3,10 +3,10 @@ use super::*;
 use quicksilver::input::{ButtonState, Key, Keyboard};
 use specs::Join;
 
-use components::{BlocksMovement, Camera, HasPosition, MapTile, Player};
+use components::{BlocksMovement, Camera, HasPosition, Player};
 use resources::{KeyboardFocus, NpcMoves};
 
-use world::{TilePos, WorldState};
+use world::TilePos;
 
 #[derive(SystemData)]
 pub struct PlayerMoveSystemData<'a> {
@@ -14,9 +14,7 @@ pub struct PlayerMoveSystemData<'a> {
     has_position: WriteStorage<'a, HasPosition>,
     blocks_movement: ReadStorage<'a, BlocksMovement>,
     camera: ReadStorage<'a, Camera>,
-    map_tile: ReadStorage<'a, MapTile>,
     keyboard: ReadExpect<'a, Keyboard>,
-    world_state: ReadExpect<'a, WorldState>,
     keyboard_focus: Read<'a, KeyboardFocus>,
     npc_moves: Write<'a, NpcMoves>,
 }
@@ -55,9 +53,7 @@ impl<'a> System<'a> for PlayerMoveSystem {
         if let Some(player_move) = player_move {
             let player_pos = get_pos(&data.player, &data.has_position);
             let next_pos = player_pos + player_move;
-            if !tile_blocks(next_pos, &data.blocks_movement, &data.world_state)
-                && !non_tile_blocks(next_pos, &data.has_position, &data.blocks_movement, &data.map_tile)
-            {
+            if !blocks(next_pos, &data.has_position, &data.blocks_movement) {
                 *get_pos_mut(&data.player, &mut data.has_position) += player_move;
                 *get_pos_mut(&data.camera, &mut data.has_position) += player_move;
                 player_moved = true;
@@ -70,22 +66,8 @@ impl<'a> System<'a> for PlayerMoveSystem {
     }
 }
 
-fn tile_blocks<'a>(next_pos: TilePos, blocks: &ReadStorage<'a, BlocksMovement>, world_state: &WorldState) -> bool {
-    if let Some(next_tile) = world_state.map.get_tile(next_pos) {
-        blocks.get(next_tile).is_some()
-    } else {
-        // off the map is considered blocking, I guess
-        true
-    }
-}
-
-fn non_tile_blocks<'a>(
-    next_pos: TilePos,
-    has_pos: &WriteStorage<'a, HasPosition>,
-    blocks: &ReadStorage<'a, BlocksMovement>,
-    map_tiles: &ReadStorage<'a, MapTile>,
-) -> bool {
-    (!map_tiles, blocks, has_pos).join().any(|(_, _, pos)| pos.position == next_pos)
+fn blocks<'a>(next_pos: TilePos, has_pos: &WriteStorage<'a, HasPosition>, blocks: &ReadStorage<'a, BlocksMovement>) -> bool {
+    (has_pos, blocks).join().any(|(hp, _)| hp.position == next_pos)
 }
 
 fn get_pos<'a, T: Component>(single_comp: &ReadStorage<'a, T>, has_pos: &WriteStorage<'a, HasPosition>) -> TilePos {

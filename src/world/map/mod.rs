@@ -1,6 +1,6 @@
 use super::*;
 
-use specs::{Builder, Entity};
+use specs::Builder;
 
 mod params;
 mod rand_gen;
@@ -8,8 +8,22 @@ mod rand_gen;
 pub use params::MapGenerationParams;
 
 #[derive(Eq, PartialEq, Copy, Clone, Debug)]
+pub enum GenSquareType {
+    Floor,
+    Wall,
+    Open,
+}
+
+fn to_real_square(kind: GenSquareType) -> Option<SquareType> {
+    match kind {
+        GenSquareType::Floor => Some(SquareType::Floor),
+        GenSquareType::Wall => Some(SquareType::Wall),
+        GenSquareType::Open => None,
+    }
+}
+
+#[derive(Eq, PartialEq, Copy, Clone, Debug)]
 pub enum SquareType {
-    Open, // open to space; usually not visible but used as a stand-in for "hull breach"
     Floor,
     Wall,
 }
@@ -23,8 +37,6 @@ pub enum VisibilityType {
 
 #[derive(Clone, Debug)]
 pub struct Map {
-    tiles: Vec<Entity>,
-
     x_min: i32,
     x_max: i32,
     y_min: i32,
@@ -36,9 +48,25 @@ pub struct Map {
 
 fn make_glyph(kind: SquareType) -> char {
     match kind {
-        SquareType::Open => '*',
         SquareType::Floor => ' ',
         SquareType::Wall => '█',
+    }
+}
+
+fn make_bg_color(kind: SquareType) -> Color {
+    match kind {
+        SquareType::Floor => Color {
+            r: 0.4,
+            g: 0.6,
+            b: 0.5,
+            a: 1.0,
+        },
+        SquareType::Wall => Color {
+            r: 0.4,
+            g: 0.6,
+            b: 0.5,
+            a: 1.0,
+        },
     }
 }
 
@@ -46,16 +74,12 @@ fn make_fg_color(kind: SquareType) -> Color {
     match kind {
         SquareType::Floor => Color::WHITE,
         SquareType::Wall => Color::WHITE,
-        SquareType::Open => Color::BLACK,
     }
 }
 
 fn get_occludes(kind: SquareType) -> bool {
     match kind {
-        SquareType::Open => false,
-
         SquareType::Floor => false,
-
         SquareType::Wall => true,
     }
 }
@@ -63,19 +87,14 @@ fn get_occludes(kind: SquareType) -> bool {
 fn get_blocks(kind: SquareType) -> bool {
     match kind {
         SquareType::Floor => false,
-
         SquareType::Wall => true,
-        SquareType::Open => true,
     }
 }
 
 fn get_blocks_airflow(kind: SquareType) -> bool {
     match kind {
         SquareType::Floor => false,
-
         SquareType::Wall => true,
-
-        SquareType::Open => false,
     }
 }
 
@@ -83,8 +102,6 @@ fn get_vacuum(kind: SquareType) -> bool {
     match kind {
         SquareType::Floor => false,
         SquareType::Wall => false,
-
-        SquareType::Open => true,
     }
 }
 
@@ -104,7 +121,6 @@ impl Map {
         let mut x = x_min;
         let mut y = y_min;
 
-        let mut tiles = Vec::with_capacity(row_width * col_height);
         let num_tiles = gen_result.cells.len();
 
         if num_tiles != row_width * col_height {
@@ -115,41 +131,42 @@ impl Map {
         }
 
         for square in gen_result.cells {
-            let mut tile_builder = world
-                .create_entity()
-                .with(components::MapTile)
-                .with(components::Visible {
-                    visibility: VisibilityType::NotSeen,
-                    memorable: true,
-                })
-                .with(components::HasPosition {
-                    position: TilePos { x, y },
-                })
-                .with(components::OxygenContainer {
-                    capacity: 100,
-                    contents: 100,
-                })
-                .with(components::CharRender {
-                    glyph: make_glyph(square.square_type),
-                    fg_color: make_fg_color(square.square_type),
-                });
+            if let Some(kind) = to_real_square(square.square_type) {
+                let mut tile_builder = world
+                    .create_entity()
+                    .with(components::Visible {
+                        visibility: VisibilityType::NotSeen,
+                        memorable: true,
+                    })
+                    .with(components::HasPosition {
+                        position: TilePos { x, y },
+                    })
+                    .with(components::OxygenContainer {
+                        capacity: 100,
+                        contents: 100,
+                    })
+                    .with(components::CharRender {
+                        glyph: make_glyph(kind),
+                        z_level: components::ZLevel::Floor,
+                        bg_color: make_bg_color(kind),
+                        fg_color: make_fg_color(kind),
+                    });
 
-            if get_occludes(square.square_type) {
-                tile_builder = tile_builder.with(components::BlocksVisibility);
-            }
-            if get_blocks(square.square_type) {
-                tile_builder = tile_builder.with(components::BlocksMovement);
-            }
-            if get_blocks_airflow(square.square_type) {
-                tile_builder = tile_builder.with(components::BlocksAirflow);
-            }
-            if get_vacuum(square.square_type) {
-                tile_builder = tile_builder.with(components::Vacuum);
-            }
+                if get_occludes(kind) {
+                    tile_builder = tile_builder.with(components::BlocksVisibility);
+                }
+                if get_blocks(kind) {
+                    tile_builder = tile_builder.with(components::BlocksMovement);
+                }
+                if get_blocks_airflow(kind) {
+                    tile_builder = tile_builder.with(components::BlocksAirflow);
+                }
+                if get_vacuum(kind) {
+                    tile_builder = tile_builder.with(components::Vacuum);
+                }
 
-            let tile = tile_builder.build();
-
-            tiles.push(tile);
+                let _tile = tile_builder.build();
+            }
 
             x += 1;
             if x > x_max {
@@ -170,6 +187,34 @@ impl Map {
                         })
                         .with(components::CharRender {
                             glyph: 'd',
+                            z_level: components::ZLevel::OnFloor,
+                            bg_color: CLEAR,
+                            fg_color: Color::WHITE,
+                        })
+                        .with(components::Visible {
+                            visibility: VisibilityType::NotSeen,
+                            memorable: true,
+                        })
+                        .with(components::BlocksVisibility)
+                        .with(components::Door {
+                            door_state: components::DoorState::Closed,
+                        })
+                        .with(components::BlocksAirflow)
+                        .with(components::BlocksMovement)
+                        .build();
+                }
+                rand_gen::GeneratedEntity::Airlock(pos) => {
+                    world
+                        .create_entity()
+                        .with(components::HasPosition { position: pos })
+                        .with(components::Hackable {
+                            name: "Airlock",
+                            hack_state: components::HackState::Door(components::DoorHackState::CompromisedShut),
+                        })
+                        .with(components::CharRender {
+                            glyph: 'A',
+                            z_level: components::ZLevel::OnFloor,
+                            bg_color: CLEAR,
                             fg_color: Color::WHITE,
                         })
                         .with(components::Visible {
@@ -190,6 +235,8 @@ impl Map {
                         .with(components::HasPosition { position: pos })
                         .with(components::CharRender {
                             glyph: '`',
+                            z_level: components::ZLevel::OnFloor,
+                            bg_color: CLEAR,
                             fg_color: quicksilver::graphics::Color {
                                 r: 0.7,
                                 g: 0.7,
@@ -210,6 +257,8 @@ impl Map {
                         .with(components::HasPosition { position: pos })
                         .with(components::CharRender {
                             glyph: 'I',
+                            z_level: components::ZLevel::OnFloor,
+                            bg_color: CLEAR,
                             fg_color: quicksilver::graphics::Color {
                                 r: 0.8,
                                 g: 0.6,
@@ -229,7 +278,6 @@ impl Map {
         }
 
         Map {
-            tiles,
             x_min,
             x_max,
             y_min,
@@ -237,23 +285,5 @@ impl Map {
             row_width,
             col_height,
         }
-    }
-
-    pub fn get_tile(&self, tile_pos: TilePos) -> Option<Entity> {
-        let (x, y) = (tile_pos.x, tile_pos.y);
-
-        if x < self.x_min || x > self.x_max || y < self.y_min || y > self.y_max {
-            return None;
-        }
-
-        let index = self.get_index(x, y);
-        self.tiles.get(index).cloned()
-    }
-
-    fn get_index(&self, x: i32, y: i32) -> usize {
-        let xoff = (x - self.x_min) as usize;
-        let yoff = (y - self.y_min) as usize;
-
-        xoff + self.row_width * yoff
     }
 }

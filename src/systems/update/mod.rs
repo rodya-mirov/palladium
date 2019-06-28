@@ -14,3 +14,6 @@ pub use oxygen_spread::OxygenSpreadSystem;
 
 mod door_update;
 pub use door_update::DoorOpenSystem;
+
+mod fake_space;
+pub use fake_space::FakeSpaceInserterSystem;

@@ -62,7 +62,7 @@ impl<'a, 'b> System<'a> for CenteredVerticalImagesRenderer<'a> {
             image
                 .execute(|image| {
                     let size = image.area().size();
-                    window.draw(&Rectangle { pos: render_pos, size }, Blended(image, Color::WHITE));
+                    window.draw(&Rectangle { pos: render_pos, size }, Img(image));
                     render_pos.y += size.y + internal_padding.y;
                     Ok(())
                 })

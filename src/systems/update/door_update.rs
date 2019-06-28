@@ -76,22 +76,12 @@ impl<'a> System<'a> for DoorOpenSystem {
             }
 
             if let Some(renderable) = data.char_render.get_mut(entity) {
-                *renderable = get_renderable(should_open);
+                if should_open {
+                    renderable.fg_color = CLEAR;
+                } else {
+                    renderable.fg_color = Color::WHITE;
+                }
             }
-        }
-    }
-}
-
-fn get_renderable(open: bool) -> CharRender {
-    if open {
-        CharRender {
-            glyph: ' ',
-            fg_color: Color::WHITE,
-        }
-    } else {
-        CharRender {
-            glyph: 'd',
-            fg_color: Color::WHITE,
         }
     }
 }
