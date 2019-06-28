@@ -131,7 +131,7 @@ impl<'a> System<'a> for OxygenSpreadSystem {
                     *neighbor_capacity -= 1;
                     taker.container.contents += 1;
 
-                    if *neighbor_capacity <= 0 {
+                    if *neighbor_capacity == 0 {
                         oxygen_sharing.remove(&neighbor_pos);
                     }
 
