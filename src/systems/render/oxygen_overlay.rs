@@ -22,6 +22,7 @@ pub struct OxygenOverlaySystemData<'a> {
     oxygen_cont: ReadStorage<'a, OxygenContainer>,
     camera: ReadStorage<'a, Camera>,
     visible: ReadStorage<'a, Visible>,
+    entities: Entities<'a>,
 
     render_params: Read<'a, GameMapRenderParams>,
     display_options: Read<'a, GameMapDisplayOptions>,
@@ -57,10 +58,11 @@ impl<'a, 'b> System<'a> for OxygenOverlayRenderer<'b> {
 
         let mut oxygen_contents = HashMap::new();
 
-        for (has_pos, oxygen_cont, vis) in (&data.has_pos, &data.oxygen_cont, &data.visible).join() {
+        for (has_pos, ent, vis) in (&data.has_pos, &data.entities, &data.visible).join() {
             // Note: if there are two oxygen containers in a square it will look weird :shrug:
             if camera_bounds.contains_pos(has_pos.position) && vis.visibility == VisibilityType::CurrentlyVisible {
-                *oxygen_contents.entry(has_pos.position).or_insert(0) += oxygen_cont.contents;
+                let local_contents = data.oxygen_cont.get(ent).map(|ox| ox.contents).unwrap_or(0);
+                *oxygen_contents.entry(has_pos.position).or_insert(0) += local_contents;
             }
         }
 

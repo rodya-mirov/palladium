@@ -18,8 +18,8 @@ pub struct OxygenSpreadSystemData<'a> {
 }
 
 // We do more iterations, with higher capacity, to make oxygen dispersal more "smooth"
-const NUM_ITERATIONS: usize = 20;
-const SHARING_PER_ITERATION: usize = 1;
+const NUM_ITERATIONS: usize = 10;
+const SHARING_PER_ITERATION: usize = 2;
 
 struct OxygenTaker<'b> {
     container: &'b mut OxygenContainer,

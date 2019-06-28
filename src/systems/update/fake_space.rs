@@ -30,6 +30,11 @@ impl<'a> System<'a> for FakeSpaceInserterSystem {
             return;
         }
 
+        perf_log!(
+            "There are currently {} entities",
+            (&data.entities).join().filter(|e| data.entities.is_alive(*e)).count()
+        );
+
         let to_delete: Vec<Entity> = (&data.entities, &data.imaginaries).join().map(|(ent, _)| ent).collect();
         for ent in to_delete {
             data.lazy_update
@@ -53,6 +58,7 @@ impl<'a> System<'a> for FakeSpaceInserterSystem {
                         visibility: VisibilityType::NotSeen,
                         memorable: false,
                     })
+                    .with(ImaginaryVisibleTile)
                     .with(CharRender {
                         bg_color: Color::BLACK,
                         fg_color: Color::BLACK,

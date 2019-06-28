@@ -112,24 +112,28 @@ macro_rules! systems {
         $method_name(&mut systems::OxygenOverlaySetup, $world_name);
 
         // important update systems; order matters, be careful
-        $method_name(&mut systems::DialogueControlSystem, $world_name);
-        $method_name(&mut systems::PlayerMoveSystem, $world_name);
-        $method_name(&mut systems::FakeSpaceInserterSystem, $world_name);
-        $method_name(&mut systems::ToggleControlSystem, $world_name);
-        $method_name(&mut systems::ToggleHackSystem, $world_name);
-        $method_name(&mut systems::DoorOpenSystem, $world_name);
-        $method_name(&mut systems::VisibilitySystem, $world_name);
-        $method_name(&mut systems::OxygenSpreadSystem, $world_name);
-        $method_name(&mut systems::PlayerNotMoved, $world_name);
+        timed!("DialogueControl", $method_name(&mut systems::DialogueControlSystem, $world_name));
+        timed!("PlayerMove", $method_name(&mut systems::PlayerMoveSystem, $world_name));
+        timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name));
+        timed!("ToggleControl", $method_name(&mut systems::ToggleControlSystem, $world_name));
+        timed!("ToggleHack", $method_name(&mut systems::ToggleHackSystem, $world_name));
+        timed!("DoorOpen", $method_name(&mut systems::DoorOpenSystem, $world_name));
+        timed!("Visibility", $method_name(&mut systems::VisibilitySystem, $world_name));
+        timed!("OxygenSpread", $method_name(&mut systems::OxygenSpreadSystem, $world_name));
+        timed!("PlayerNotMoved", $method_name(&mut systems::PlayerNotMoved, $world_name));
     };
 }
 
 fn setup_systems(world: &mut World) {
-    systems!(setup, world);
+    timed!("Set up all systems", {
+        systems!(setup, world);
+    });
 }
 
 fn run_systems(world: &mut World) {
-    systems!(run_now, world);
+    timed!("Run all systems", {
+        systems!(run_now, world);
+    });
 }
 
 impl MainState {
@@ -292,77 +296,79 @@ impl State for MainState {
             return Ok(());
         }
 
-        window.set_blend_mode(quicksilver::graphics::BlendMode::Additive)?;
+        timed!("Rendering", {
+            window.set_blend_mode(quicksilver::graphics::BlendMode::Additive)?;
 
-        let bg_color = Color::from_hex("556887");
-        window.clear(bg_color)?;
+            let bg_color = Color::from_hex("556887");
+            window.clear(bg_color)?;
 
-        // Because of borrow lifetimes, these systems can't persist
-        // so we just call em manually, it works great
-        systems::CharsRenderer {
-            window,
-            tileset: &mut self.assets.tileset,
-        }
-        .run_now(&self.world.res);
-
-        systems::OxygenOverlayRenderer { window }.run_now(&self.world.res);
-
-        systems::ControlsRenderer {
-            window,
-            controls_image: &mut self.assets.controls_image,
-            tileset: &mut self.assets.tileset,
-        }
-        .run_now(&self.world.res);
-
-        window.flush()?;
-
-        if let Some(dialogue_assets) = self.assets.dialogue_assets.as_mut() {
-            window.draw(
-                &Rectangle {
-                    pos: Vector::new(0, 0),
-                    size: window.screen_size(),
-                },
-                Col(Color {
-                    r: 0.0,
-                    g: 0.0,
-                    b: 0.0,
-                    a: 0.7,
-                }),
-            );
-
-            let selected_index = self
-                .world
-                .read_resource::<DialogueStateResource>()
-                .state
-                .as_ref()
-                .expect("If dialogue assets are defined, state should be too")
-                .selected_index;
-
-            let mut dialogue_images = Vec::with_capacity(dialogue_assets.option_assets.len() + 1);
-            dialogue_images.push(&mut dialogue_assets.main_text);
-            dialogue_assets.option_assets.iter_mut().enumerate().for_each(|(i, option)| {
-                let image = if i == selected_index {
-                    &mut option.selected_text
-                } else {
-                    &mut option.unselected_text
-                };
-                dialogue_images.push(image);
-            });
-
-            systems::CenteredVerticalImagesRenderer {
+            // Because of borrow lifetimes, these systems can't persist
+            // so we just call em manually, it works great
+            systems::CharsRenderer {
                 window,
-                images: &mut dialogue_images,
-                bg_color: Color {
-                    r: 0.3,
-                    g: 0.6,
-                    b: 0.5,
-                    a: 1.0,
-                },
-                outside_padding: Vector::new(30.0, 30.0),
-                internal_padding: Vector::new(20.0, 20.0),
+                tileset: &mut self.assets.tileset,
             }
             .run_now(&self.world.res);
-        }
+
+            systems::OxygenOverlayRenderer { window }.run_now(&self.world.res);
+
+            systems::ControlsRenderer {
+                window,
+                controls_image: &mut self.assets.controls_image,
+                tileset: &mut self.assets.tileset,
+            }
+            .run_now(&self.world.res);
+
+            window.flush()?;
+
+            if let Some(dialogue_assets) = self.assets.dialogue_assets.as_mut() {
+                window.draw(
+                    &Rectangle {
+                        pos: Vector::new(0, 0),
+                        size: window.screen_size(),
+                    },
+                    Col(Color {
+                        r: 0.0,
+                        g: 0.0,
+                        b: 0.0,
+                        a: 0.7,
+                    }),
+                );
+
+                let selected_index = self
+                    .world
+                    .read_resource::<DialogueStateResource>()
+                    .state
+                    .as_ref()
+                    .expect("If dialogue assets are defined, state should be too")
+                    .selected_index;
+
+                let mut dialogue_images = Vec::with_capacity(dialogue_assets.option_assets.len() + 1);
+                dialogue_images.push(&mut dialogue_assets.main_text);
+                dialogue_assets.option_assets.iter_mut().enumerate().for_each(|(i, option)| {
+                    let image = if i == selected_index {
+                        &mut option.selected_text
+                    } else {
+                        &mut option.unselected_text
+                    };
+                    dialogue_images.push(image);
+                });
+
+                systems::CenteredVerticalImagesRenderer {
+                    window,
+                    images: &mut dialogue_images,
+                    bg_color: Color {
+                        r: 0.3,
+                        g: 0.6,
+                        b: 0.5,
+                        a: 1.0,
+                    },
+                    outside_padding: Vector::new(30.0, 30.0),
+                    internal_padding: Vector::new(20.0, 20.0),
+                }
+                .run_now(&self.world.res);
+            }
+        });
 
         Ok(())
     }

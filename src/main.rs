@@ -1,6 +1,6 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_range_loop)]
-#![deny(clippy::print_stdout)]
+// #![deny(clippy::print_stdout)] // TODO: do we need this
 
 #[macro_use]
 extern crate specs_derive;
@@ -15,6 +15,9 @@ use quicksilver::{
     prelude::*,
     Result as QsResult,
 };
+
+#[macro_use]
+mod timer;
 
 mod components;
 mod game_state;

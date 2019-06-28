@@ -60,6 +60,8 @@ impl<'a> System<'a> for VisibilitySystem {
             visibles.entry(pos.position).or_insert_with(|| Vec::with_capacity(1)).push(vis);
         }
 
+        max_range = std::cmp::min(max_range, 30);
+
         // NB: this range is worst case, but if we hit full shadow, we can stop early
         // the only time we'd actually hit this max range is if we never get to full shadow ("we can see forever")
         // which is not a good state for this algorithm :dusty-stick:
