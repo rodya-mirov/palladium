@@ -27,4 +27,5 @@ TODO for individual features (commits may handle any number of these)
 - "Has changed" tag on certain components, manually done (FlaggedStorage is probably not good enough)
   then use this for efficiency things (e.g. only update oxygen containers if they're adjacent to something
   that changed)
-- SmallVec implementation (so no heap allocation until it's too big; may help with oxygen)
+- SmallVec implementation (so no heap allocation until it's too big; may help with oxygen) (probably just
+  pull in a dependency; also currently not using vecs on anything important)

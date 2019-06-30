@@ -36,11 +36,12 @@ impl Timer {
 
 #[cfg(feature = "timing")]
 macro_rules! timed {
-    ($name:expr, $to_run:expr) => {
+    ($name:expr, $to_run:expr) => {{
         let t = timer::Timer::new($name);
-        $to_run;
+        let out = $to_run;
         t.stop();
-    };
+        out
+    }};
 }
 
 // No-op macro so when timing is not turned on, it has zero effect (name is ignored)

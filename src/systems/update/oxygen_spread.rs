@@ -54,22 +54,28 @@ impl<'a> System<'a> for OxygenSpreadSystem {
             return;
         }
 
-        let airblocks = (&data.has_pos, &data.blocks_airflow)
-            .join()
-            .map(|(hp, _)| hp.position)
-            .collect::<HashSet<TilePos>>();
+        let airblocks = timed!("Computing air blocks", {
+            (&data.has_pos, &data.blocks_airflow)
+                .join()
+                .map(|(hp, _)| hp.position)
+                .collect::<HashSet<TilePos>>()
+        });
 
-        let vacuums = (&data.has_pos, &data.vacuums)
-            .join()
-            .map(|(hp, _)| hp.position)
-            .filter(|pos| !airblocks.contains(pos))
-            .collect::<HashSet<TilePos>>();
+        let vacuums = timed!("Computing vacuum places", {
+            (&data.has_pos, &data.vacuums)
+                .join()
+                .map(|(hp, _)| hp.position)
+                .filter(|pos| !airblocks.contains(pos))
+                .collect::<HashSet<TilePos>>()
+        });
 
-        let containers = (&data.has_pos, &data.oxygen_cont)
-            .join()
-            .map(|(hp, _)| hp.position)
-            .filter(|pos| !airblocks.contains(pos))
-            .collect::<HashSet<TilePos>>();
+        let containers = timed!("Computing container locations", {
+            (&data.has_pos, &data.oxygen_cont)
+                .join()
+                .map(|(hp, _)| hp.position)
+                .filter(|pos| !airblocks.contains(pos))
+                .collect::<HashSet<TilePos>>()
+        });
 
         // First, all vacuums must vent their air into space
         for (ox, _, _) in (&mut data.oxygen_cont, &data.vacuums, !&data.blocks_airflow).join() {
