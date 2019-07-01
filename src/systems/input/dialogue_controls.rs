@@ -20,7 +20,8 @@ pub struct DialogueControlSystemData<'a> {
     queued_actions: Write<'a, QueuedPlayerActions>,
 }
 
-const ACCEPT_KEYS: [Key; 2] = [Key::Space, Key::Return];
+// NB: took out space because it's too easy to miss dialogues when you're wait spamming
+const ACCEPT_KEYS: [Key; 1] = [Key::Return];
 
 impl<'a> System<'a> for DialogueControlSystem {
     type SystemData = DialogueControlSystemData<'a>;

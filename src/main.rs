@@ -20,6 +20,7 @@ use quicksilver::{
 mod timer;
 
 mod components;
+mod constants;
 mod game_state;
 mod numerics;
 mod resources;

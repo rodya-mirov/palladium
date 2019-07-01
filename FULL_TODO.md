@@ -1,19 +1,16 @@
 TODO for individual features (commits may handle any number of these)
 
-### Easy
+### More Systems
 
-- Windows (hackable?)
-- Some kind of indicator that the player is "stuck in place" (e.g. when hacking)
-- Some kind of indicator in hacks of how long it will take
-
-### Not Easy
-
-- More interesting space background (not just black)
-
-### More Features
-
+- Windows (see through, not pass through; hackable? to open/close and allow airflow?)
 - Fire (spreads to burnables, consumes oxygen, burns out when stuff burns up or it
   runs out of air)
+
+### UI/UX
+
+- Some kind of indicator that the player is "stuck in place" (e.g. when hacking)
+- Some kind of indicator in hacks of how long it will take
+- More interesting space background (not just black)
 
 ### Big
 

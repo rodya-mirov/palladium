@@ -66,10 +66,10 @@ impl<'a, 'b> System<'a> for OxygenOverlayRenderer<'b> {
             }
         }
 
-        // First, paint all the relevant tiles (gotten direct from position loop)
         for x in camera_bounds.x_min..=camera_bounds.x_max {
             for y in camera_bounds.y_min..=camera_bounds.y_max {
-                // NB: this is None when there is nothing visible in the area
+                // NB: contents is None when there is nothing visible in the area, but 0 when it's visible
+                // and there is no oxygen container (or it's empty or etc.)
                 if let Some(contents) = oxygen_contents.get(&TilePos { x, y }) {
                     let render_pos = get_render_pos(x, y, camera_bounds, *data.render_params);
                     let rect = Rectangle::new(
@@ -84,21 +84,8 @@ impl<'a, 'b> System<'a> for OxygenOverlayRenderer<'b> {
 }
 
 fn to_color(oxygen_content: usize) -> Color {
-    let (r, b) = {
-        if oxygen_content <= 10 {
-            (1.0, 0.0)
-        } else if oxygen_content < 20 {
-            (0.8, 0.2)
-        } else if oxygen_content < 30 {
-            (0.6, 0.4)
-        } else if oxygen_content < 40 {
-            (0.4, 0.6)
-        } else if oxygen_content < 50 {
-            (0.2, 0.8)
-        } else {
-            (0.0, 1.0)
-        }
-    };
+    let b = (oxygen_content as f32) / (constants::oxygen::DEFAULT_FULL_OXYGEN as f32);
+    let r = 1.0 - b;
 
     Color { r, b, g: 0.0, a: 0.6 }
 }

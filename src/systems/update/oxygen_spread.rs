@@ -17,10 +17,6 @@ pub struct OxygenSpreadSystemData<'a> {
     npc_moves: Read<'a, NpcMoves>,
 }
 
-// We do more iterations, with higher capacity, to make oxygen dispersal more "smooth"
-const NUM_ITERATIONS: usize = 10;
-const SHARING_PER_ITERATION: usize = 2;
-
 struct OxygenTaker<'b> {
     container: &'b mut OxygenContainer,
     has_pos: &'b HasPosition,
@@ -88,7 +84,7 @@ impl<'a> System<'a> for OxygenSpreadSystem {
         let pos_should_vent = |pos| is_vacuum_adjacent(pos, &airblocks, &vacuums, &containers);
 
         // We do several small iterations per timestep, which smooths out the airflow
-        for _ in 0..NUM_ITERATIONS {
+        for _ in 0..constants::oxygen::OXYGEN_SYSTEM_ITERATIONS {
             let mut oxygen_taker_queue = BinaryHeap::new();
             let mut oxygen_sharing = HashMap::new();
 
@@ -99,7 +95,7 @@ impl<'a> System<'a> for OxygenSpreadSystem {
                 .filter(|(_, hp, _)| !airblocks.contains(&hp.position))
             {
                 if giver_oxygen.contents > 0 {
-                    let reduction = std::cmp::min(giver_oxygen.contents, SHARING_PER_ITERATION);
+                    let reduction = std::cmp::min(giver_oxygen.contents, constants::oxygen::OXYGEN_SYSTEM_SHARE_PER_ITERATION);
                     giver_oxygen.contents -= reduction;
 
                     // If it's adjacent to a vacuum that "shared" oxygen just goes away

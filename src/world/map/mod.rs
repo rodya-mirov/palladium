@@ -142,8 +142,8 @@ impl Map {
                         position: TilePos { x, y },
                     })
                     .with(components::OxygenContainer {
-                        capacity: components::DEFAULT_FULL_OXYGEN,
-                        contents: components::DEFAULT_FULL_OXYGEN,
+                        capacity: constants::oxygen::DEFAULT_FULL_OXYGEN,
+                        contents: constants::oxygen::DEFAULT_FULL_OXYGEN,
                     })
                     .with(components::CharRender {
                         glyph: make_glyph(kind),

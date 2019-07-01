@@ -45,7 +45,7 @@ pub const FONT_MONONOKI_PATH: &str = "fonts/mononoki/mononoki-Regular.ttf";
 pub const FONT_SQUARE_PATH: &str = "fonts/square/square.ttf";
 
 // TODO: autogen this list somehow
-pub const ALL_GAME_GLYPHS: &str = "* █aAdD@I:`0123456789";
+pub const ALL_GAME_GLYPHS: &str = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm,.;:?%* █aAdD@I:`0123456789";
 
 fn make_assets() -> GameAssets {
     let world_params: Asset<MapGenerationParams> = Asset::new(load_file("config/map_params.ron").and_then(move |bytes| {
@@ -117,6 +117,8 @@ macro_rules! systems {
         timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name));
         timed!("ToggleControl", $method_name(&mut systems::ToggleControlSystem, $world_name));
         timed!("ToggleHack", $method_name(&mut systems::ToggleHackSystem, $world_name));
+
+        timed!("Breathe", $method_name(&mut systems::BreatheSystem, $world_name));
         timed!("DoorOpen", $method_name(&mut systems::DoorOpenSystem, $world_name));
         timed!("Visibility", $method_name(&mut systems::VisibilitySystem, $world_name));
         timed!("OxygenSpread", $method_name(&mut systems::OxygenSpreadSystem, $world_name));
@@ -261,6 +263,14 @@ impl State for MainState {
                 visibility: world::VisibilityType::CurrentlyVisible,
                 memorable: false,
             })
+            .with(components::Breathes {
+                capacity: constants::oxygen::DEFAULT_FULL_OXYGEN,
+                contents: constants::oxygen::DEFAULT_FULL_OXYGEN,
+                fast_gain_threshold: constants::oxygen::FAST_GAIN_THRESHOLD,
+                slow_gain_threshold: constants::oxygen::SLOW_GAIN_THRESHOLD,
+                slow_drop_threshold: constants::oxygen::SLOW_DROP_THRESHOLD,
+            })
+            .with(components::CanSuffocate::Player)
             .with(components::Player {})
             .build();
 

@@ -160,6 +160,7 @@ pub struct GameMapRenderParams {
     pub map_offset: Vector,
     pub tile_size_px: Vector,
     pub controls_image_offset_px: Vector,
+    pub oxygen_meter_offset_px: Vector,
 }
 
 impl Default for GameMapRenderParams {
@@ -169,6 +170,7 @@ impl Default for GameMapRenderParams {
             map_offset: Vector::new(50.0, 50.0),
             tile_size_px: Vector::new(20.0, 20.0),
             controls_image_offset_px: Vector::new(30.0, 30.0),
+            oxygen_meter_offset_px: Vector::new(30.0, 60.0),
         }
     }
 }

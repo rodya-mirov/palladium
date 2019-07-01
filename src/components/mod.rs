@@ -102,13 +102,32 @@ pub struct Player {
     // nothing i guess? Probably something later
 }
 
-pub const DEFAULT_FULL_OXYGEN: usize = 60;
-
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
 #[storage(DenseVecStorage)]
 pub struct OxygenContainer {
     pub capacity: usize, // how much air the entity can hold
     pub contents: usize, // how much air the entity currently has
+}
+
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[storage(HashMapStorage)]
+pub struct Breathes {
+    pub capacity: usize,
+    pub contents: usize,
+    // +2 per tick if there is at least this much air in their tile
+    pub fast_gain_threshold: usize,
+    // +1 per tick if there is at least this much air in their tile
+    pub slow_gain_threshold: usize,
+    // -1 per tick if there is at least this much air in their tile
+    pub slow_drop_threshold: usize,
+    // -2 per tick if the above is not satisfied
+}
+
+#[derive(Component, Debug, Clone, Eq, PartialEq)]
+#[storage(HashMapStorage)]
+pub enum CanSuffocate {
+    // enum determining the behavior of what happens when they _do_ suffocate
+    Player,
 }
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
