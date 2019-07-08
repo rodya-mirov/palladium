@@ -10,6 +10,7 @@ mod turn_state_helpers;
 
 mod input;
 mod render;
+pub mod start;
 mod update;
 
 pub use input::*;

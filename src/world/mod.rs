@@ -18,7 +18,7 @@ impl WorldState {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Hash, Serialize, Deserialize)]
 pub struct TilePos {
     pub x: i32,
     pub y: i32,

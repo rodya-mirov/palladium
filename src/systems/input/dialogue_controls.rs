@@ -16,6 +16,7 @@ pub struct DialogueControlSystemData<'a> {
     keyboard: ReadExpect<'a, Keyboard>,
     game_is_quit: Write<'a, GameIsQuit>,
     keyboard_focus: Write<'a, KeyboardFocus>,
+    saves: Write<'a, SavedStates>,
     dialogue_state_resource: Write<'a, DialogueStateResource>,
     queued_actions: Write<'a, QueuedPlayerActions>,
 }
@@ -42,6 +43,7 @@ impl<'a> System<'a> for DialogueControlSystem {
                 &mut data.hackable,
                 &mut data.keyboard_focus,
                 &mut data.game_is_quit,
+                &mut data.saves,
             );
             *data.dialogue_state_resource = new_dsr;
         }
@@ -70,6 +72,7 @@ fn user_selected(
     hackable: &mut WriteStorage<'_, Hackable>,
     focus: &mut KeyboardFocus,
     game_is_quit: &mut GameIsQuit,
+    saves: &mut resources::SavedStates,
 ) -> DialogueStateResource {
     let mut new_dsr = DialogueStateResource {
         is_initialized: InitializationState::Finished,
@@ -88,6 +91,12 @@ fn user_selected(
             }
             DialogueCallback::QuitGame => {
                 game_is_quit.0 = true;
+            }
+            DialogueCallback::LoadGame => {
+                saves.load_requested = true;
+            }
+            DialogueCallback::SaveGame => {
+                saves.save_requested = true;
             }
         }
     }

@@ -89,7 +89,7 @@ fn process_suffocate(cs: &CanSuffocate, focus: &mut KeyboardFocus, dsr: &mut Dia
             let builder = dialogue_helpers::DialogueBuilder::new(
                 "You have been without air for too long.\n\nThis life is over, but the tether pulls you back.",
             )
-            .with_option("[Continue]", vec![DialogueCallback::EndDialogue, DialogueCallback::QuitGame]);
+            .with_option("[Continue]", vec![DialogueCallback::EndDialogue, DialogueCallback::LoadGame]);
 
             dialogue_helpers::launch_dialogue(builder, focus, dsr);
         }

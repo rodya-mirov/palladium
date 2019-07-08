@@ -2,6 +2,47 @@ use super::*;
 
 use std::collections::VecDeque;
 
+#[derive(Clone)]
+pub struct RenderStale(pub bool);
+
+impl Default for RenderStale {
+    fn default() -> Self {
+        RenderStale(true)
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct SavedStates {
+    pub saves: Vec<SaveGameData>,
+    pub save_requested: bool,
+    pub load_requested: bool,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub struct GameClock {
+    pub hours: usize,
+    pub minutes: usize,
+    pub seconds: usize,
+}
+
+impl Default for GameClock {
+    fn default() -> Self {
+        GameClock {
+            hours: 15,
+            minutes: 12,
+            seconds: 40,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct SaveGameData {
+    // components, saved
+    pub world_state: Vec<u8>,
+    // resources, saved
+    pub resources: Vec<u8>,
+}
+
 #[derive(Clone, Debug)]
 pub struct DialogueStateResource {
     pub is_initialized: InitializationState,
@@ -44,6 +85,8 @@ pub enum DialogueCallback {
     // end current dialogue, return to normal gameplay
     EndDialogue,
     Hack(HackDialogueCallback),
+    SaveGame,
+    LoadGame,
     QuitGame,
 }
 
@@ -70,24 +113,7 @@ pub enum HackType {
     Door { new_door_behavior: components::DoorBehavior },
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct GameClock {
-    pub hours: usize,
-    pub minutes: usize,
-    pub seconds: usize,
-}
-
-impl Default for GameClock {
-    fn default() -> Self {
-        GameClock {
-            hours: 15,
-            minutes: 12,
-            seconds: 40,
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct NpcMoves {
     pub npc_moves_remaining: usize,
     pub ticks_till_next_npc_move: usize,

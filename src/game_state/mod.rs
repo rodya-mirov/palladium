@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use quicksilver::{
     geom::{Rectangle, Vector},
     graphics::{Color, Font, FontStyle, Image},
-    lifecycle::Window,
+    lifecycle::{State, Window},
     load_file, Future,
 };
 use specs::Builder;
@@ -93,14 +93,14 @@ fn make_text_image(text: String, color: Color) -> Asset<Image> {
 }
 
 fn setup<'a, T: System<'a>>(sys: &mut T, world: &mut World) {
-    sys.setup(&mut world.res);
+    sys.setup(world);
 }
 
 fn run_now<'a, T>(sys: &mut T, world: &'a mut World)
 where
     T: for<'b> System<'b>,
 {
-    sys.run_now(&world.res);
+    sys.run_now(world);
     world.maintain();
 }
 
@@ -114,15 +114,19 @@ macro_rules! systems {
         // important update systems; order matters, be careful
         timed!("DialogueControl", $method_name(&mut systems::DialogueControlSystem, $world_name));
         timed!("PlayerMove", $method_name(&mut systems::PlayerMoveSystem, $world_name));
-        timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name));
         timed!("ToggleControl", $method_name(&mut systems::ToggleControlSystem, $world_name));
         timed!("ToggleHack", $method_name(&mut systems::ToggleHackSystem, $world_name));
 
+        timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name)); // before vis
         timed!("Breathe", $method_name(&mut systems::BreatheSystem, $world_name));
         timed!("DoorOpen", $method_name(&mut systems::DoorOpenSystem, $world_name));
         timed!("Visibility", $method_name(&mut systems::VisibilitySystem, $world_name));
         timed!("OxygenSpread", $method_name(&mut systems::OxygenSpreadSystem, $world_name));
+
         timed!("PlayerNotMoved", $method_name(&mut systems::PlayerNotMoved, $world_name));
+
+        timed!("SaveGame", $method_name(&mut systems::SerializeSystem, $world_name));
+        timed!("LoadGame", $method_name(&mut systems::DeserializeSystem, $world_name));
     };
 }
 
@@ -152,7 +156,7 @@ impl MainState {
                     assets.world_params.execute(|params| {
                         let map = Map::make_random(&params, world);
                         let world_state = WorldState::new(map);
-                        world.add_resource::<WorldState>(world_state);
+                        world.insert::<WorldState>(world_state);
                         init = InitializationState::Finished;
                         Ok(())
                     })?;
@@ -241,6 +245,8 @@ fn make_dialogue_assets(dialogue_state: &DialogueState) -> DialogueAssets {
 impl State for MainState {
     fn new() -> QsResult<Self> {
         let mut world = World::new();
+        world.register::<components::SaveComponent>();
+        world.insert(components::SaveComponentAllocator::new());
 
         let assets = make_assets();
         setup_systems(&mut world);
@@ -272,6 +278,7 @@ impl State for MainState {
             })
             .with(components::CanSuffocate::Player)
             .with(components::Player {})
+            .marked::<components::SaveComponent>()
             .build();
 
         let _camera = world
@@ -280,7 +287,10 @@ impl State for MainState {
                 position: TilePos { x: 15, y: 15 },
             })
             .with(components::Camera { x_rad: 15, y_rad: 15 })
+            .marked::<components::SaveComponent>()
             .build();
+
+        systems::start::StartGameSystem.run_now(&world);
 
         Ok(MainState { world, assets })
     }
@@ -290,7 +300,7 @@ impl State for MainState {
             return Ok(());
         }
 
-        self.world.add_resource::<quicksilver::input::Keyboard>(*window.keyboard());
+        self.world.insert::<quicksilver::input::Keyboard>(*window.keyboard());
 
         if self.world.read_resource::<GameIsQuit>().0 {
             window.close();
@@ -319,16 +329,16 @@ impl State for MainState {
                 window,
                 tileset: &mut self.assets.tileset,
             }
-            .run_now(&self.world.res);
+            .run_now(&self.world);
 
-            systems::OxygenOverlayRenderer { window }.run_now(&self.world.res);
+            systems::OxygenOverlayRenderer { window }.run_now(&self.world);
 
             systems::ControlsRenderer {
                 window,
                 controls_image: &mut self.assets.controls_image,
                 tileset: &mut self.assets.tileset,
             }
-            .run_now(&self.world.res);
+            .run_now(&self.world);
 
             window.flush()?;
 
@@ -377,7 +387,7 @@ impl State for MainState {
                     outside_padding: Vector::new(30.0, 30.0),
                     internal_padding: Vector::new(20.0, 20.0),
                 }
-                .run_now(&self.world.res);
+                .run_now(&self.world);
             }
         });
 

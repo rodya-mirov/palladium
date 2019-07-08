@@ -1,11 +1,18 @@
 use super::*;
 
 use quicksilver::graphics::Color;
-use specs::storage::{DenseVecStorage, HashMapStorage, NullStorage, VecStorage};
+use serde::{Deserialize, Serialize};
+use specs::{
+    saveload::{SimpleMarker, SimpleMarkerAllocator},
+    storage::{DenseVecStorage, HashMapStorage, NullStorage, VecStorage},
+};
 
 use world::{TilePos, VisibilityType};
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+pub type SaveComponent = SimpleMarker<()>;
+pub type SaveComponentAllocator = SimpleMarkerAllocator<()>;
+
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct HasPosition {
     pub position: TilePos,
@@ -14,23 +21,23 @@ pub struct HasPosition {
 // Used to represent "deep space" -- but these are deleted and recreated every timestep
 // so need to be visible && renderable && have a position but aren't really meaningful
 // from a game system perspective; space is everywhere but these only exist in the camera zone
-#[derive(Component, Default, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Default, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct ImaginaryVisibleTile;
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct BlocksMovement; // I mean, it's direct
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct BlocksVisibility; // I mean, it's direct
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct BlocksAirflow; // this is for walls and doors and stuff
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct Visible {
     // whether the object is currently visible
@@ -42,21 +49,22 @@ pub struct Visible {
     pub memorable: bool,
 }
 
-#[derive(Component, Clone)]
+#[derive(Debug, Component, Clone, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub struct Hackable {
     // name, as it appears on the hackable menu; probably not unique
-    pub name: &'static str,
+    // TODO: why can't this be a &'static str? Something about deriving de/serialize not work
+    pub name: String,
     pub hack_state: HackState,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum HackState {
     Uncompromised,
     Compromised,
 }
 
-#[derive(Component, Debug, Copy, Clone, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 #[storage(VecStorage)]
 pub struct CharRender {
     pub glyph: char,
@@ -66,7 +74,7 @@ pub struct CharRender {
     pub fg_color: Color,
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ZLevel {
     // easy enough to add more here; these are only used for sorting
     NegativeInfinity,
@@ -96,20 +104,20 @@ impl PartialOrd for ZLevel {
     }
 }
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub struct Player {
     // nothing i guess? Probably something later
 }
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(DenseVecStorage)]
 pub struct OxygenContainer {
     pub capacity: usize, // how much air the entity can hold
     pub contents: usize, // how much air the entity currently has
 }
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub struct Breathes {
     pub capacity: usize,
@@ -123,32 +131,32 @@ pub struct Breathes {
     // -2 per tick if the above is not satisfied
 }
 
-#[derive(Component, Debug, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub enum CanSuffocate {
     // enum determining the behavior of what happens when they _do_ suffocate
     Player,
 }
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct Vacuum; // oxygen container which destroys all its oxygen each timestep
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub struct Door {
     pub door_state: DoorState,
     pub door_behavior: DoorBehavior,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum DoorState {
     Open,
     Closed,
 }
 
 #[allow(dead_code)] // Leaving these in as I sort of want to use them later, but not yet
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub enum DoorBehavior {
     FullAuto,
     AutoOpen,
@@ -157,11 +165,11 @@ pub enum DoorBehavior {
     StayOpen,
 }
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[storage(NullStorage)]
 pub struct OpensDoors;
 
-#[derive(Component, Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub struct Camera {
     // actual dimension is 2*rad + 1

@@ -9,7 +9,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 
 use components::{BlocksVisibility, HasPosition, Player, Visible};
-use resources::NpcMoves;
+use resources::{NpcMoves, RenderStale};
 
 use numerics::Float;
 use world::{TilePos, VisibilityType};
@@ -22,6 +22,7 @@ pub struct VisibilitySystemData<'a> {
     visible: WriteStorage<'a, Visible>,
 
     npc_moves: Read<'a, NpcMoves>,
+    render_stale: Read<'a, RenderStale>,
 }
 
 pub struct VisibilitySystem;
@@ -35,7 +36,7 @@ impl<'a> System<'a> for VisibilitySystem {
     type SystemData = VisibilitySystemData<'a>;
 
     fn run(&mut self, mut data: Self::SystemData) {
-        if !data.npc_moves.move_was_made {
+        if !(data.npc_moves.move_was_made || data.render_stale.0) {
             return;
         }
 

@@ -3,7 +3,7 @@
 use super::*;
 
 use components::{Camera, CharRender, HasPosition, ImaginaryVisibleTile, Visible, ZLevel};
-use resources::NpcMoves;
+use resources::{NpcMoves, RenderStale};
 
 use world::{TilePos, VisibilityType};
 
@@ -18,6 +18,7 @@ pub struct FakeSpaceInserterSystemData<'a> {
     lazy_update: Read<'a, LazyUpdate>,
 
     npc_moves: Read<'a, NpcMoves>,
+    render_stale: Read<'a, RenderStale>,
 }
 
 pub struct FakeSpaceInserterSystem;
@@ -26,7 +27,7 @@ impl<'a> System<'a> for FakeSpaceInserterSystem {
     type SystemData = FakeSpaceInserterSystemData<'a>;
 
     fn run(&mut self, data: Self::SystemData) {
-        if !data.npc_moves.move_was_made {
+        if !(data.npc_moves.move_was_made || data.render_stale.0) {
             return;
         }
 

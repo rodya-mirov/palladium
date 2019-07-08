@@ -28,7 +28,7 @@ pub enum SquareType {
     Wall,
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[derive(Eq, PartialEq, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum VisibilityType {
     NotSeen,
     Remembered,
@@ -134,6 +134,7 @@ impl Map {
             if let Some(kind) = to_real_square(square.square_type) {
                 let mut tile_builder = world
                     .create_entity()
+                    .marked::<components::SaveComponent>()
                     .with(components::Visible {
                         visibility: VisibilityType::NotSeen,
                         memorable: true,
@@ -166,7 +167,7 @@ impl Map {
                     tile_builder = tile_builder.with(components::Vacuum);
                 }
 
-                let _tile = tile_builder.build();
+                let _tile = tile_builder.marked::<components::SaveComponent>().build();
             }
 
             x += 1;
@@ -181,9 +182,10 @@ impl Map {
                 rand_gen::GeneratedEntity::Door(pos) => {
                     world
                         .create_entity()
+                        .marked::<components::SaveComponent>()
                         .with(components::HasPosition { position: pos })
                         .with(components::Hackable {
-                            name: "Door",
+                            name: "Door".to_owned(),
                             hack_state: components::HackState::Uncompromised,
                         })
                         .with(components::CharRender {
@@ -209,9 +211,10 @@ impl Map {
                 rand_gen::GeneratedEntity::Airlock(pos) => {
                     world
                         .create_entity()
+                        .marked::<components::SaveComponent>()
                         .with(components::HasPosition { position: pos })
                         .with(components::Hackable {
-                            name: "Airlock",
+                            name: "Airlock".to_owned(),
                             hack_state: components::HackState::Uncompromised,
                         })
                         .with(components::CharRender {
@@ -237,6 +240,7 @@ impl Map {
                 rand_gen::GeneratedEntity::Rubbish(pos) => {
                     world
                         .create_entity()
+                        .marked::<components::SaveComponent>()
                         .with(components::HasPosition { position: pos })
                         .with(components::CharRender {
                             glyph: '`',
@@ -260,6 +264,7 @@ impl Map {
                 rand_gen::GeneratedEntity::Pillar(pos) => {
                     world
                         .create_entity()
+                        .marked::<components::SaveComponent>()
                         .with(components::HasPosition { position: pos })
                         .with(components::CharRender {
                             glyph: 'I',

@@ -10,11 +10,10 @@ timing = []
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+serde_cbor = "0.9"
+snap = "0.2"
 ron = "0.5.1"
 rand = "0.6"
-specs = "0.14.3"
-specs-derive = "0.4.0"
-shred = "^0.7.0"
-shred-derive = "^0.5.0"
+specs = { version = "0.15", default-features = false, features = ["shred-derive", "specs-derive", "serde", "uuid_entity"] }
 # More features: "collisions", "complex_shapes", "immi_ui", "sounds", gamepads
 quicksilver = { version = "0.3.6", default-features = false, features = ["fonts", "saving"] }

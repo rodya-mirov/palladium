@@ -18,6 +18,7 @@ pub struct ControlsRendererSystemData<'a> {
     player: ReadStorage<'a, Player>,
     breathes: ReadStorage<'a, Breathes>,
     game_clock: Read<'a, GameClock>,
+
     game_map_render_params: Read<'a, GameMapRenderParams>,
     game_map_display_options: Read<'a, GameMapDisplayOptions>,
 }
@@ -61,10 +62,9 @@ impl<'a, 'b> System<'a> for ControlsRenderer<'b> {
         // render clock
         self.tileset
             .execute(|tileset| {
-                let time_string = format!(
-                    "{:02}:{:02}:{:02}",
-                    data.game_clock.hours, data.game_clock.minutes, data.game_clock.seconds
-                );
+                let game_clock = &data.game_clock;
+
+                let time_string = format!("{:02}:{:02}:{:02}", game_clock.hours, game_clock.minutes, game_clock.seconds);
 
                 let mut total_width = 0.0;
                 let mut max_height = 0.0;

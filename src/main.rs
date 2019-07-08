@@ -3,23 +3,27 @@
 // #![deny(clippy::print_stdout)] // TODO: do we need this
 
 #[macro_use]
-extern crate specs_derive;
+extern crate specs;
 
-#[macro_use]
-extern crate shred_derive;
+// This is a clippy bug; this trait import is used, in a submodule
+#[allow(unused_imports)]
+use specs::{prelude::*, saveload::MarkedBuilder};
 
-use specs::prelude::*;
+use serde::{Deserialize, Serialize};
 
 use quicksilver::{
+    geom::*,
+    graphics::{Background::*, Color},
     lifecycle::{run, Asset, Settings},
-    prelude::*,
     Result as QsResult,
 };
 
 #[macro_use]
 mod timer;
 
+#[macro_use]
 mod components;
+
 mod constants;
 mod game_state;
 mod numerics;

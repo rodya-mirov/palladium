@@ -1,6 +1,6 @@
 use super::*;
 
-use resources::{GameClock, NpcMoves};
+use resources::{GameClock, NpcMoves, RenderStale};
 
 // how many update frames after a manual move until NPC can move
 // essentially player can do 30 / (this many) taps per second (assuming we're running at 60fps)
@@ -20,7 +20,7 @@ pub fn yield_moves_to_npc(npc_moves: &mut NpcMoves, num_moves: usize) {
     npc_moves.move_was_made = true;
 }
 
-pub fn timestep(npc_moves: &mut NpcMoves, game_clock: &mut GameClock) {
+pub fn timestep(npc_moves: &mut NpcMoves, game_clock: &mut GameClock, render_stale: &mut RenderStale) {
     if npc_moves.ticks_till_next_npc_move > 0 {
         npc_moves.ticks_till_next_npc_move -= 1;
     } else if npc_moves.npc_moves_remaining > 0 {
@@ -34,6 +34,7 @@ pub fn timestep(npc_moves: &mut NpcMoves, game_clock: &mut GameClock) {
         npc_moves.ticks_till_next_npc_move = TICKS_PER_MANUAL_TURN;
     }
     npc_moves.move_was_made = false;
+    render_stale.0 = false;
 }
 
 fn advance_clock(game_clock: &mut GameClock, num_turns: usize) {
