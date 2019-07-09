@@ -6,6 +6,12 @@ TODO for individual features (commits may handle any number of these)
 - Fire (spreads to burnables, consumes oxygen, burns out when stuff burns up or it
   runs out of air)
 
+### Refactors
+
+- DialogueCallback -> Callback; we should be able to launch callbacks wherever, and
+  catch them with a later system, instead of tying them to dialogue
+  ToO: when you die, it should launch the opening dialogue again
+
 ### UI/UX
 
 - Some kind of indicator that the player is "stuck in place" (e.g. when hacking)
@@ -14,10 +20,10 @@ TODO for individual features (commits may handle any number of these)
 
 ### Big
 
+- Seriously consider if the "spaceship" setting is interesting enough (maybe not)
 - Start thinking about more interesting worldgen
 - Start thinking about NPCs
 - Start thinking about how to plug in skills
-- Start thinking about death / rebirth
 
 ### Performance Stuff
 
