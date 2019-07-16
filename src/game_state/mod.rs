@@ -112,17 +112,25 @@ macro_rules! systems {
         $method_name(&mut systems::OxygenOverlaySetup, $world_name);
 
         // important update systems; order matters, be careful
+        // player doing stuff
         timed!("DialogueControl", $method_name(&mut systems::DialogueControlSystem, $world_name));
         timed!("PlayerMove", $method_name(&mut systems::PlayerMoveSystem, $world_name));
         timed!("ToggleControl", $method_name(&mut systems::ToggleControlSystem, $world_name));
         timed!("ToggleHack", $method_name(&mut systems::ToggleHackSystem, $world_name));
 
-        timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name)); // before vis
+        // non-players doing stuff
+        timed!("NpcMoves", $method_name(&mut systems::NpcMoveSystem, $world_name));
+
+        // various updates of inanimates
         timed!("Breathe", $method_name(&mut systems::BreatheSystem, $world_name));
         timed!("DoorOpen", $method_name(&mut systems::DoorOpenSystem, $world_name));
-        timed!("Visibility", $method_name(&mut systems::VisibilitySystem, $world_name));
         timed!("OxygenSpread", $method_name(&mut systems::OxygenSpreadSystem, $world_name));
 
+        // bookkeeping stuff after things stop changing
+        timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name)); // before vis, after stuff moves
+        timed!("Visibility", $method_name(&mut systems::VisibilitySystem, $world_name));
+
+        // end of turn upkeep
         timed!("PlayerNotMoved", $method_name(&mut systems::PlayerNotMoved, $world_name));
 
         timed!("SaveGame", $method_name(&mut systems::SerializeSystem, $world_name));
@@ -269,13 +277,7 @@ impl State for MainState {
                 visibility: world::VisibilityType::CurrentlyVisible,
                 memorable: false,
             })
-            .with(components::Breathes {
-                capacity: constants::oxygen::DEFAULT_FULL_OXYGEN,
-                contents: constants::oxygen::DEFAULT_FULL_OXYGEN,
-                fast_gain_threshold: constants::oxygen::FAST_GAIN_THRESHOLD,
-                slow_gain_threshold: constants::oxygen::SLOW_GAIN_THRESHOLD,
-                slow_drop_threshold: constants::oxygen::SLOW_DROP_THRESHOLD,
-            })
+            .with(components::Breathes::default())
             .with(components::CanSuffocate::Player)
             .with(components::Player {})
             .marked::<components::SaveComponent>()

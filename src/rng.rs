@@ -1,9 +1,6 @@
-#![allow(deprecated)]
-// use deprecated RNG because the rand team screwed up, the non-deprecated thing is broken
-// that's what you get with pre-1.0 software i guess
-
 pub use rand::Rng;
-use rand::{Isaac64Rng, SeedableRng};
+use rand::SeedableRng;
+use rand_isaac::Isaac64Rng;
 
 pub type PalladRng = Isaac64Rng;
 

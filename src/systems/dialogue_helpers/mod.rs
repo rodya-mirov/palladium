@@ -125,7 +125,6 @@ fn wrapped(s: &str, line_width: usize) -> String {
 
         line.push(c);
         if i < chars.len() - 1 && line.len() >= line_width {
-            println!("Killer character was {}", c);
             let (mut new_line, needs_dash) = {
                 if chars[i + 1] == ' ' {
                     (line.split_off(line_width), false)

@@ -209,6 +209,7 @@ serde_components! (
         door: Door,
         od: OpensDoors,
         camera: Camera,
+        npc: NPC,
     ]
     // TODO: have a resources aspect to this, too
 );

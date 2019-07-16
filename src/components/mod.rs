@@ -77,6 +77,7 @@ pub struct CharRender {
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ZLevel {
     // easy enough to add more here; these are only used for sorting
+    // this is just sorting for drawing, not spatial z-level (z-coordinate)
     NegativeInfinity,
     Floor,
     OnFloor,
@@ -111,6 +112,17 @@ pub struct Player {
 }
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+#[storage(HashMapStorage)]
+pub enum NPC {
+    Alien(AlienAI),
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
+pub enum AlienAI {
+    Wander,
+}
+
+#[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(DenseVecStorage)]
 pub struct OxygenContainer {
     pub capacity: usize, // how much air the entity can hold
@@ -131,11 +143,26 @@ pub struct Breathes {
     // -2 per tick if the above is not satisfied
 }
 
+impl Default for Breathes {
+    fn default() -> Self {
+        Breathes {
+            capacity: constants::oxygen::DEFAULT_FULL_OXYGEN,
+            contents: constants::oxygen::DEFAULT_FULL_OXYGEN,
+            fast_gain_threshold: constants::oxygen::FAST_GAIN_THRESHOLD,
+            slow_gain_threshold: constants::oxygen::SLOW_GAIN_THRESHOLD,
+            slow_drop_threshold: constants::oxygen::SLOW_DROP_THRESHOLD,
+        }
+    }
+}
+
 #[derive(Component, Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[storage(HashMapStorage)]
 pub enum CanSuffocate {
     // enum determining the behavior of what happens when they _do_ suffocate
+    // Player: triggers player death things
     Player,
+    // something else: just dies (entity is deleted)
+    Death,
 }
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Default, Serialize, Deserialize)]

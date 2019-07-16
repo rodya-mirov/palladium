@@ -114,12 +114,13 @@ pub struct Square {
     pub square_type: GenSquareType,
 }
 
-#[derive(Eq, PartialEq, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum GeneratedEntity {
     Rubbish(TilePos),
     Pillar(TilePos),
     Door(TilePos),
     Airlock(TilePos),
+    Alien(TilePos, Color),
 }
 
 impl MapGenResult {
@@ -207,9 +208,17 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
         for x in (room.left + 1)..room.right {
             for y in (room.top + 1)..room.bottom {
                 let next_perc = rng.gen_range(1, 101); // 1 to 100
-                if next_perc <= 5 {
+                if next_perc <= 2 {
+                    let color: Color = Color {
+                        r: rng.gen_range(0.4, 0.6),
+                        g: rng.gen_range(0.8, 1.0),
+                        b: rng.gen_range(0.2, 0.4),
+                        a: 1.0,
+                    };
+                    map.others.push(GeneratedEntity::Alien(TilePos { x: x as i32, y: y as i32 }, color));
+                } else if next_perc <= 7 {
                     map.others.push(GeneratedEntity::Rubbish(TilePos { x: x as i32, y: y as i32 }));
-                } else if next_perc <= 10 {
+                } else if next_perc <= 12 {
                     map.others.push(GeneratedEntity::Pillar(TilePos { x: x as i32, y: y as i32 }));
                 };
 

@@ -126,7 +126,6 @@ impl NpcMoves {
         self.npc_moves_remaining == 0 && self.ticks_till_next_npc_move == 0
     }
 
-    #[allow(dead_code)] // TODO: left in for doc reasons but remove this when we have NPCs
     pub fn npc_can_move(&self) -> bool {
         self.npc_moves_remaining > 0 && self.ticks_till_next_npc_move == 0
     }

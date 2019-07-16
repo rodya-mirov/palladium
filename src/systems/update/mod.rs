@@ -21,5 +21,8 @@ pub use fake_space::FakeSpaceInserterSystem;
 mod breathe;
 pub use breathe::BreatheSystem;
 
+mod npc_move;
+pub use npc_move::NpcMoveSystem;
+
 mod saves;
 pub use saves::{DeserializeSystem, SerializeSystem};

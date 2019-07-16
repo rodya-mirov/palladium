@@ -58,14 +58,14 @@ impl<'a> System<'a> for BreatheSystem {
                 lose_oxygen(breathe, constants::oxygen::SLOW_DROP_SPEED);
                 if breathe.contents == 0 {
                     if let Some(cs) = data.can_suffocate.get(entity) {
-                        process_suffocate(cs, &mut data.keyboard_focus, &mut data.dsr);
+                        process_suffocate(entity, cs, &mut data.keyboard_focus, &mut data.dsr, &data.entities);
                     }
                 }
             } else {
                 lose_oxygen(breathe, constants::oxygen::FAST_DROP_SPEED);
                 if breathe.contents == 0 {
                     if let Some(cs) = data.can_suffocate.get(entity) {
-                        process_suffocate(cs, &mut data.keyboard_focus, &mut data.dsr);
+                        process_suffocate(entity, cs, &mut data.keyboard_focus, &mut data.dsr, &data.entities);
                     }
                 }
             }
@@ -81,7 +81,7 @@ fn lose_oxygen(breathe: &mut Breathes, loss: usize) {
     breathe.contents = safe_subtract(breathe.contents, loss);
 }
 
-fn process_suffocate(cs: &CanSuffocate, focus: &mut KeyboardFocus, dsr: &mut DialogueStateResource) {
+fn process_suffocate(entity: Entity, cs: &CanSuffocate, focus: &mut KeyboardFocus, dsr: &mut DialogueStateResource, entities: &Entities) {
     use resources::DialogueCallback;
 
     match cs {
@@ -92,6 +92,11 @@ fn process_suffocate(cs: &CanSuffocate, focus: &mut KeyboardFocus, dsr: &mut Dia
             .with_option("[Continue]", vec![DialogueCallback::EndDialogue, DialogueCallback::LoadGame]);
 
             dialogue_helpers::launch_dialogue(builder, focus, dsr);
+        }
+        CanSuffocate::Death => {
+            // thing dies, uh, delete it
+            // TODO: do something more interesting here?
+            entities.delete(entity).expect("Entity should be live, since it just came up");
         }
     }
 }

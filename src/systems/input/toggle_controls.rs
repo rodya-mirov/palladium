@@ -4,14 +4,28 @@ use super::*;
 
 use dialogue_helpers::{launch_dialogue, DialogueBuilder};
 
-use resources::{DialogueCallback, DialogueStateResource, GameMapDisplayOptions, KeyboardFocus};
+use resources::{DialogueCallback, DialogueStateResource, GameMapDisplayOptions, KeyboardFocus, SavedStates};
 
 #[derive(SystemData)]
 pub struct ToggleControlSystemData<'a> {
     game_map_display_options: Write<'a, GameMapDisplayOptions>,
     keyboard: ReadExpect<'a, Keyboard>,
     keyboard_focus: Write<'a, KeyboardFocus>,
+    saved_states: Write<'a, SavedStates>,
     dialogue_state_resource: Write<'a, DialogueStateResource>,
+}
+
+fn button_down(kb: &Keyboard, key: Key) -> bool {
+    match kb[key] {
+        ButtonState::Held => true,
+        ButtonState::Pressed => true,
+        ButtonState::Released => false,
+        ButtonState::NotPressed => false,
+    }
+}
+
+fn shift_held(kb: &Keyboard) -> bool {
+    button_down(kb, Key::LShift) || button_down(kb, Key::RShift)
 }
 
 pub struct ToggleControlSystem;
@@ -35,8 +49,14 @@ impl<'a> System<'a> for ToggleControlSystem {
             display_options.show_oxygen_overlay = !display_options.show_oxygen_overlay;
         } else if keyboard[Key::Q] == ButtonState::Pressed {
             launch_quit_dialogue(focus, dsr);
+        } else if keyboard[Key::S] == ButtonState::Pressed {
+            data.saved_states.save_requested = true;
         } else if keyboard[Key::L] == ButtonState::Pressed {
-            launch_license_dialogue(focus, dsr);
+            if shift_held(&keyboard) {
+                launch_license_dialogue(focus, dsr);
+            } else {
+                data.saved_states.load_requested = true;
+            }
         }
     }
 }

@@ -10,7 +10,11 @@ TODO for individual features (commits may handle any number of these)
 
 - DialogueCallback -> Callback; we should be able to launch callbacks wherever, and
   catch them with a later system, instead of tying them to dialogue
-  ToO: when you die, it should launch the opening dialogue again
+  - while you're in there: when you die, it should launch the opening dialogue again
+- If we disable the parallel feature, can we use dispatchers? This would be a serious
+  help if (e.g.) we want persistent state across runs of a System (e.g. caching)
+- Destructible / mutable tiles (as setup for a big meteor hitting the station, or
+  a big bomb going off, or whatever)
 
 ### UI/UX
 

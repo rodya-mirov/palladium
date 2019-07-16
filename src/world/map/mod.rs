@@ -237,6 +237,29 @@ impl Map {
                         .with(components::BlocksMovement)
                         .build();
                 }
+                rand_gen::GeneratedEntity::Alien(pos, color) => {
+                    world
+                        .create_entity()
+                        .marked::<components::SaveComponent>()
+                        .with(components::Breathes::default())
+                        .with(components::CanSuffocate::Death)
+                        .with(components::OpensDoors)
+                        .with(components::HasPosition { position: pos })
+                        .with(components::CharRender {
+                            glyph: 'N',
+                            z_level: components::ZLevel::OnFloor,
+                            bg_color: CLEAR,
+                            fg_color: color,
+                            disabled: false,
+                        })
+                        .with(components::Visible {
+                            visibility: VisibilityType::NotSeen,
+                            memorable: false,
+                        })
+                        // TODO: with Npc::Alien::Wanders or something
+                        .with(components::BlocksMovement)
+                        .build();
+                }
                 rand_gen::GeneratedEntity::Rubbish(pos) => {
                     world
                         .create_entity()
