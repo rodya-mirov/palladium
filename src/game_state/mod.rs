@@ -265,6 +265,7 @@ impl State for MainState {
                 // TODO: somehow configure this so it's guaranteed to be a good spot
                 position: TilePos { x: 15, y: 15 },
             })
+            .with(components::BlocksMovement)
             .with(components::CharRender {
                 glyph: '@',
                 z_level: components::ZLevel::OnFloor,

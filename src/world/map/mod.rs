@@ -243,6 +243,7 @@ impl Map {
                         .marked::<components::SaveComponent>()
                         .with(components::Breathes::default())
                         .with(components::CanSuffocate::Death)
+                        .with(components::NPC::Alien(components::AlienAI::Wander))
                         .with(components::OpensDoors)
                         .with(components::HasPosition { position: pos })
                         .with(components::CharRender {

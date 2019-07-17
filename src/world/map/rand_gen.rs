@@ -208,7 +208,7 @@ pub fn rand_gen(params: &MapGenerationParams) -> MapGenResult {
         for x in (room.left + 1)..room.right {
             for y in (room.top + 1)..room.bottom {
                 let next_perc = rng.gen_range(1, 101); // 1 to 100
-                if next_perc <= 2 {
+                if next_perc <= 3 {
                     let color: Color = Color {
                         r: rng.gen_range(0.4, 0.6),
                         g: rng.gen_range(0.8, 1.0),

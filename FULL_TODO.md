@@ -22,6 +22,16 @@ TODO for individual features (commits may handle any number of these)
 - Some kind of indicator in hacks of how long it will take
 - More interesting space background (not just black)
 
+### Bugs
+
+- You can see door state being updated offscreen (because doors are memorable);
+  to fix this we need that "memory system"
+
+### Improvements
+
+- Put RNG in resources (with save/load) and get consistent entity iteration order
+  so it's impossible to game the RNG with save/load
+
 ### Big
 
 - Seriously consider if the "spaceship" setting is interesting enough (maybe not)
