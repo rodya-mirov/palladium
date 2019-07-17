@@ -5,6 +5,8 @@ TODO for individual features (commits may handle any number of these)
 - Windows (see through, not pass through; hackable? to open/close and allow airflow?)
 - Fire (spreads to burnables, consumes oxygen, burns out when stuff burns up or it
   runs out of air)
+- When an NPC dies it should leave behind a corpse (or something?
+- [T] to talk to NPCs (probably with a popup like hacking); currently can't speak their language
 
 ### Refactors
 
@@ -30,7 +32,8 @@ TODO for individual features (commits may handle any number of these)
 ### Improvements
 
 - Put RNG in resources (with save/load) and get consistent entity iteration order
-  so it's impossible to game the RNG with save/load
+  so it's impossible to game the RNG with save/load)
+- CanSuffocate should be a part of Breathe
 
 ### Big
 
