@@ -16,6 +16,7 @@ pub struct ToggleHackSystemData<'a> {
 
     keyboard: ReadExpect<'a, Keyboard>,
     keyboard_focus: Write<'a, KeyboardFocus>,
+    npc_moves: Read<'a, NpcMoves>,
     dialogue_state_resource: Write<'a, DialogueStateResource>,
 }
 
@@ -26,6 +27,10 @@ impl<'a> System<'a> for ToggleHackSystem {
 
     fn run(&mut self, data: Self::SystemData) {
         if *data.keyboard_focus != KeyboardFocus::GameMap {
+            return;
+        }
+
+        if !data.npc_moves.player_can_move() {
             return;
         }
 
