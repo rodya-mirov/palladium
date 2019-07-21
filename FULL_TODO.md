@@ -32,6 +32,8 @@ TODO for individual features (commits may handle any number of these)
 
 - You can see door state being updated offscreen (because doors are memorable);
   to fix this we need that "memory system"
+- If you die while hacking, it tries to keep hacking (due to QueuedPlayerActions
+  not being save/loaded). Blocked by I don't know how to ser/deser Entity objects
 
 ### Improvements
 

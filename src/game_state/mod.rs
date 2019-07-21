@@ -139,11 +139,6 @@ macro_rules! systems {
             $method_name(&mut systems::TalkCallbackHandlerSystem, $world_name)
         );
 
-        timed!(
-            "DialogueUpdateSystem",
-            $method_name(&mut systems::DialogueUpdateSystem, $world_name)
-        );
-
         // non-players doing stuff
         timed!("NpcMoves", $method_name(&mut systems::NpcMoveSystem, $world_name));
 
@@ -151,6 +146,11 @@ macro_rules! systems {
         timed!("Breathe", $method_name(&mut systems::BreatheSystem, $world_name));
         timed!("DoorOpen", $method_name(&mut systems::DoorOpenSystem, $world_name));
         timed!("OxygenSpread", $method_name(&mut systems::OxygenSpreadSystem, $world_name));
+
+        timed!(
+            "DialogueUpdateSystem",
+            $method_name(&mut systems::DialogueUpdateSystem, $world_name)
+        );
 
         // bookkeeping stuff after things stop changing
         timed!("SpaceInserter", $method_name(&mut systems::FakeSpaceInserterSystem, $world_name)); // before vis, after stuff moves
