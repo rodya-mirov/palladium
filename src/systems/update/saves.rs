@@ -81,12 +81,15 @@ macro_rules! serde_components {
             )*
         );
 
+        #[derive(Serialize, Deserialize)]
+        pub struct SerdeComponentsData {
+            $(
+                $name: Option<<$kind as ConvertSaveload<$marker_name>>::Data>,
+            )*
+        }
+
         impl<'a> SerializeComponents<NoError, $marker_name> for $ser_struct_name<'a> {
-            type Data = (
-                $(
-                    Option<<$kind as ConvertSaveload<$marker_name>>::Data>,
-                )*
-            );
+            type Data = SerdeComponentsData;
 
             fn serialize_entity<F>(&self, entity: Entity, mut ids: F) -> Result<Self::Data, NoError>
             where
@@ -94,11 +97,11 @@ macro_rules! serde_components {
             {
                 let $ser_struct_name( $( ref $name , )* ) = *self;
 
-                Ok((
+                Ok(SerdeComponentsData {
                     $(
-                        $name.get(entity).map(|c| c.convert_into(&mut ids).map(Some)).unwrap_or(Ok(None))?,
+                        $name: $name.get(entity).map(|c| c.convert_into(&mut ids).map(Some)).unwrap_or(Ok(None))?,
                     )*
-                ))
+                })
             }
         }
 
@@ -111,11 +114,7 @@ macro_rules! serde_components {
         }
 
         impl<'a> DeserializeComponents<CombinedError, $marker_name> for $deser_struct_name<'a> {
-            type Data = (
-                $(
-                    Option<<$kind as ConvertSaveload<$marker_name>>::Data>,
-                )*
-            );
+            type Data = SerdeComponentsData;
 
             fn deserialize_entity<F>(
                 &mut self,
@@ -126,10 +125,8 @@ macro_rules! serde_components {
             where
                 F: FnMut($marker_name) -> Option<Entity>
             {
-                let ( $($name,)* ) = components;
-
                 $(
-                    if let Some(component) = $name {
+                    if let Some(component) = components.$name {
                         self.$name.insert(entity, ConvertSaveload::<$marker_name>::convert_from(component, &mut ids)?)?;
                     } else {
                         self.$name.remove(entity);
@@ -187,12 +184,12 @@ pub struct SerializeSystemData<'a> {
     components: SerializeSystemComponentsM<'a>,
     resources: SerializeResourcesM<'a>,
     marker: ReadStorage<'a, SaveComponent>,
-    saves: Write<'a, resources::SavedStates>,
+    callbacks: Write<'a, Callbacks>,
+    saves: Write<'a, SavedStates>,
 }
 
 serde_components! (
     SerializeSystemComponentsM, DeserializeSystemComponentsM, SaveComponent,
-    // TOOD: use structs more carefully so we don't need two names
     components: [
         has_position: HasPosition,
         ivt: ImaginaryVisibleTile,
@@ -210,8 +207,8 @@ serde_components! (
         od: OpensDoors,
         camera: Camera,
         npc: NPC,
+        talkable: Talkable,
     ]
-    // TODO: have a resources aspect to this, too
 );
 
 serde_resources! (
@@ -226,7 +223,12 @@ impl<'a> System<'a> for SerializeSystem {
     type SystemData = SerializeSystemData<'a>;
 
     fn run(&mut self, mut data: Self::SystemData) {
-        if data.saves.save_requested {
+        let save_requests = data.callbacks.take_some(|cb| match cb {
+            Callback::SaveGame => TakeDecision::Take(()),
+            x => TakeDecision::Leave(x),
+        });
+
+        if !save_requests.is_empty() {
             // TODO: this is too pretty, lots of wasted space, that costs RAM
             // TODO: might need compression at some point
             let mut ser = ron::ser::Serializer::new(Some(Default::default()), true);
@@ -240,12 +242,10 @@ impl<'a> System<'a> for SerializeSystem {
                 .expect("Should be able to serialize resources")
                 .into_bytes();
 
-            data.saves.saves.push(resources::SaveGameData {
+            data.saves.saves.push(SaveGameData {
                 world_state: saved_components.into_bytes(),
                 resources: resource_bytes,
             });
-
-            data.saves.save_requested = false;
         }
     }
 }
@@ -260,8 +260,9 @@ pub struct DeserializeSystemData<'a> {
     resources: DeserializeResourcesM<'a>,
     allocator: Write<'a, SaveComponentAllocator>,
 
-    saves: Write<'a, resources::SavedStates>,
-    render_stale: Write<'a, resources::RenderStale>,
+    saves: Write<'a, SavedStates>,
+    callbacks: Write<'a, Callbacks>,
+    render_stale: Write<'a, RenderStale>,
 }
 
 impl<'a> System<'a> for DeserializeSystem {
@@ -270,7 +271,12 @@ impl<'a> System<'a> for DeserializeSystem {
     fn run(&mut self, mut data: Self::SystemData) {
         use ron::de::Deserializer;
 
-        if data.saves.load_requested {
+        let load_requests = data.callbacks.take_some(|cb| match cb {
+            Callback::LoadGame => TakeDecision::Take(()),
+            x => TakeDecision::Leave(x),
+        });
+
+        if !load_requests.is_empty() {
             let num_saves = data.saves.saves.len();
 
             if num_saves > 0 {
@@ -292,8 +298,6 @@ impl<'a> System<'a> for DeserializeSystem {
             } else {
                 eprintln!("Load requested, but no save game data is present");
             }
-
-            data.saves.load_requested = false;
 
             data.render_stale.0 = true;
         }

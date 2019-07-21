@@ -16,10 +16,6 @@ pub enum Alignment {
     Horizontal,
 }
 
-pub fn render_image_corner(window: &mut Window, image: &Image, offset: Vector, corner: Corner) {
-    render_images_corner(window, &[image], offset, Vector::new(0, 0), corner, Alignment::Horizontal);
-}
-
 pub fn render_images_corner(
     window: &mut Window,
     images: &[&Image],

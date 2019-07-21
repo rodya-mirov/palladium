@@ -53,7 +53,7 @@ pub struct Visible {
 #[storage(HashMapStorage)]
 pub struct Hackable {
     // name, as it appears on the hackable menu; probably not unique
-    // TODO: why can't this be a &'static str? Something about deriving de/serialize not work
+    // TODO: why can't this be a &'static str? Something about deriving de/serialize not work.
     pub name: String,
     pub hack_state: HackState,
 }
@@ -109,6 +109,13 @@ impl PartialOrd for ZLevel {
 #[storage(HashMapStorage)]
 pub struct Player {
     // nothing i guess? Probably something later
+}
+
+#[derive(Component, Debug, Clone, Serialize, Deserialize)]
+#[storage(HashMapStorage)]
+pub struct Talkable {
+    pub name: String,
+    // TODO: dialogue trees and stuff, it's gonna get complicated but this is just a placeholder rn
 }
 
 #[derive(Component, Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]

@@ -75,6 +75,11 @@ fn do_queued_move(data: &mut PlayerMoveSystemData) -> bool {
 }
 
 fn do_manual_move(data: &mut PlayerMoveSystemData) -> bool {
+    if data.keyboard[Key::Space] == ButtonState::Pressed {
+        // "player moved" but didn't go anywhere (sit)
+        return true;
+    }
+
     let player_move = {
         if data.keyboard[Key::Left] == ButtonState::Pressed {
             Some(TilePos { x: -1, y: 0 })
@@ -84,8 +89,6 @@ fn do_manual_move(data: &mut PlayerMoveSystemData) -> bool {
             Some(TilePos { x: 0, y: -1 })
         } else if data.keyboard[Key::Down] == ButtonState::Pressed {
             Some(TilePos { x: 0, y: 1 })
-        } else if data.keyboard[Key::Space] == ButtonState::Pressed {
-            Some(TilePos { x: 0, y: 0 })
         } else {
             None
         }

@@ -24,11 +24,17 @@ pub struct GameAssets {
 
     tileset: Asset<HashMap<char, Image>>,
 
-    controls_image: Asset<Image>,
+    controls_image: ControlsImages,
 
     // TODO: have to pass in a reference to game assets in the update system
     // since assets aren't sync or send
     dialogue_assets: Option<DialogueAssets>,
+}
+
+pub struct ControlsImages {
+    pub hack: Asset<Image>,
+    pub talk: Asset<Image>,
+    pub repair: Asset<Image>,
 }
 
 pub struct DialogueAssets {
@@ -46,6 +52,10 @@ pub const FONT_SQUARE_PATH: &str = "fonts/square/square.ttf";
 
 // TODO: autogen this list somehow
 pub const ALL_GAME_GLYPHS: &str = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm,.;:?%* █aAdD@I:`0123456789";
+
+fn render_mononoki(text: String, size: f32, color: Color) -> Asset<Image> {
+    Asset::new(Font::load(FONT_MONONOKI_PATH).and_then(move |font| font.render(&text, &FontStyle::new(size, color))))
+}
 
 fn make_assets() -> GameAssets {
     let world_params: Asset<MapGenerationParams> = Asset::new(load_file("config/map_params.ron").and_then(move |bytes| {
@@ -70,11 +80,11 @@ fn make_assets() -> GameAssets {
         Ok(tileset)
     }));
 
-    let controls_image = Asset::new(Font::load(game_state::FONT_MONONOKI_PATH).and_then(move |font| {
-        let controls = vec!["[H]ack", "\n", "[O]xygen Display", "[C]ontrols", "\n", "[L]icenses", "[Q]uit"];
-
-        font.render(&(controls.join("\n")), &FontStyle::new(18.0, Color::BLACK))
-    }));
+    let controls_image = ControlsImages {
+        hack: render_mononoki("[H]ack".to_owned(), 18.0, Color::BLACK),
+        repair: render_mononoki("[R]epair".to_owned(), 18.0, Color::BLACK),
+        talk: render_mononoki("[T]alk".to_owned(), 18.0, Color::BLACK),
+    };
 
     GameAssets {
         world_params,
@@ -117,6 +127,22 @@ macro_rules! systems {
         timed!("PlayerMove", $method_name(&mut systems::PlayerMoveSystem, $world_name));
         timed!("ToggleControl", $method_name(&mut systems::ToggleControlSystem, $world_name));
         timed!("ToggleHack", $method_name(&mut systems::ToggleHackSystem, $world_name));
+        timed!("ToggleTalk", $method_name(&mut systems::ToggleTalkSystem, $world_name));
+
+        timed!(
+            "HackCallbackHandlerSystem",
+            $method_name(&mut systems::HackCallbackHandlerSystem, $world_name)
+        );
+
+        timed!(
+            "TalkCallbackHandlerSystem",
+            $method_name(&mut systems::TalkCallbackHandlerSystem, $world_name)
+        );
+
+        timed!(
+            "DialogueUpdateSystem",
+            $method_name(&mut systems::DialogueUpdateSystem, $world_name)
+        );
 
         // non-players doing stuff
         timed!("NpcMoves", $method_name(&mut systems::NpcMoveSystem, $world_name));
@@ -135,6 +161,12 @@ macro_rules! systems {
 
         timed!("SaveGame", $method_name(&mut systems::SerializeSystem, $world_name));
         timed!("LoadGame", $method_name(&mut systems::DeserializeSystem, $world_name));
+
+        timed!(
+            "GameIsQuitChecker",
+            $method_name(&mut systems::GameIsQuitCheckerSystem, $world_name)
+        );
+        timed!("CallbackChecker", $method_name(&mut systems::CallbackCheckerSystem, $world_name));
     };
 }
 
@@ -181,7 +213,7 @@ impl MainState {
             match dialogue_state_resource.is_initialized {
                 InitializationState::Finished => InitializationState::Finished,
                 InitializationState::Started => {
-                    if check_dialogue_assets_loaded(assets.dialogue_assets.as_mut().unwrap())? {
+                    if assets.dialogue_assets.is_loaded()? {
                         InitializationState::Finished
                     } else {
                         InitializationState::Started
@@ -192,9 +224,9 @@ impl MainState {
                         match dialogue_state_resource.state.as_ref() {
                             None => (InitializationState::Finished, None),
                             Some(state) => {
-                                let mut new_assets = make_dialogue_assets(state);
+                                let new_assets = make_dialogue_assets(state);
                                 let new_state = {
-                                    if check_dialogue_assets_loaded(&mut new_assets)? {
+                                    if assets.dialogue_assets.is_loaded()? {
                                         InitializationState::Finished
                                     } else {
                                         InitializationState::Started
@@ -214,20 +246,97 @@ impl MainState {
 
         let loaded = world_state_ready == InitializationState::Finished
             && dialogue_ready == InitializationState::Finished
-            && is_loaded(&mut assets.tileset)?
-            && is_loaded(&mut assets.controls_image)?;
+            && assets.tileset.is_loaded()?
+            && assets.controls_image.is_loaded()?;
 
         Ok(loaded)
     }
 }
 
-fn check_dialogue_assets_loaded(assets: &mut DialogueAssets) -> QsResult<bool> {
-    let mut out = is_loaded(&mut assets.main_text)?;
-    for doa in &mut assets.option_assets {
-        out &= is_loaded(&mut doa.selected_text)?;
-        out &= is_loaded(&mut doa.unselected_text)?;
+// TODO: move this off into its own crate and probably put in a derive
+pub trait Loadable {
+    fn is_loaded(&mut self) -> QsResult<bool>;
+}
+
+impl<T> Loadable for Asset<T> {
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        let mut loaded = false;
+
+        self.execute(|_| {
+            loaded = true;
+            Ok(())
+        })?;
+
+        Ok(loaded)
     }
-    Ok(out)
+}
+
+impl<T> Loadable for &mut T
+where
+    T: Loadable,
+{
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        (*self).is_loaded()
+    }
+}
+
+impl Loadable for DialogueAssets {
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        let mut out = true;
+
+        out &= self.main_text.is_loaded()?;
+        out &= self.option_assets.is_loaded()?;
+
+        Ok(out)
+    }
+}
+
+impl Loadable for DialogueOptionAsset {
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        let mut out = true;
+
+        out &= self.selected_text.is_loaded()?;
+        out &= self.unselected_text.is_loaded()?;
+
+        Ok(out)
+    }
+}
+
+impl Loadable for ControlsImages {
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        let mut out = true;
+
+        out &= self.hack.is_loaded()?;
+        out &= self.talk.is_loaded()?;
+        out &= self.repair.is_loaded()?;
+
+        Ok(out)
+    }
+}
+
+impl<T> Loadable for Option<T>
+where
+    T: Loadable,
+{
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        match self.as_mut() {
+            Some(loadable) => loadable.is_loaded(),
+            None => Ok(true),
+        }
+    }
+}
+
+impl<T> Loadable for Vec<T>
+where
+    T: Loadable,
+{
+    fn is_loaded(&mut self) -> QsResult<bool> {
+        let mut loaded = true;
+        for loadable in self.iter_mut() {
+            loaded &= loadable.is_loaded()?;
+        }
+        Ok(loaded)
+    }
 }
 
 fn make_dialogue_assets(dialogue_state: &DialogueState) -> DialogueAssets {
@@ -396,24 +505,4 @@ impl State for MainState {
 
         Ok(())
     }
-}
-
-pub fn is_loaded<T>(asset: &mut Asset<T>) -> QsResult<bool> {
-    let mut is_loaded = false;
-    asset.execute(|_t| {
-        is_loaded = true;
-        Ok(())
-    })?;
-    Ok(is_loaded)
-}
-
-pub fn all_loaded<'a, T>(assets: &mut [&'a mut Asset<T>]) -> QsResult<bool> {
-    for asset in assets.iter_mut() {
-        let good = is_loaded(asset)?;
-        if !good {
-            return Ok(false);
-        }
-    }
-
-    Ok(true)
 }

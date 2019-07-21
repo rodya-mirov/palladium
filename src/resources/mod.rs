@@ -14,8 +14,6 @@ impl Default for RenderStale {
 #[derive(Clone, Default)]
 pub struct SavedStates {
     pub saves: Vec<SaveGameData>,
-    pub save_requested: bool,
-    pub load_requested: bool,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize)]
@@ -77,26 +75,83 @@ pub struct DialogueState {
 pub struct DialogueOptionState {
     pub selected_text: String,
     pub unselected_text: String,
-    pub callbacks: Vec<DialogueCallback>,
+    pub callbacks: Vec<Callback>,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Callbacks(Vec<Callback>);
+
+impl std::ops::Deref for Callbacks {
+    type Target = Vec<Callback>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::ops::DerefMut for Callbacks {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+pub enum TakeDecision<A, B> {
+    Take(A),
+    Leave(B),
+}
+
+impl Callbacks {
+    pub fn take_some<F, T>(&mut self, mut take_mapper: F) -> Vec<T>
+    where
+        F: FnMut(Callback) -> TakeDecision<T, Callback>,
+    {
+        let callbacks = std::mem::replace(&mut self.0, Vec::new());
+
+        let mut keep = Vec::new();
+        let mut out = Vec::new();
+
+        for cb in callbacks {
+            match take_mapper(cb) {
+                TakeDecision::Leave(b) => keep.push(b),
+                TakeDecision::Take(a) => out.push(a),
+            }
+        }
+
+        std::mem::replace(&mut self.0, keep);
+        out
+    }
 }
 
 #[derive(Clone, Debug)]
-pub enum DialogueCallback {
+pub enum Callback {
+    // start a dialogue
+    StartDialogue(DialogueState),
     // end current dialogue, return to normal gameplay
     EndDialogue,
-    Hack(HackDialogueCallback),
+    // rollup for hack callbacks
+    Hack(HackCallback),
+    // rollup for talk callbacks
+    Talk(TalkCallback),
+    // request to save the game; handled by SaveSystem
     SaveGame,
+    // request to load the game; handled by LoadSystem
     LoadGame,
+    // request to quit the game
     QuitGame,
 }
 
 #[derive(Clone, Debug)]
-pub enum HackDialogueCallback {
+pub enum HackCallback {
     // when you select a hack target and you need to see a more specific menu about
     // how you want to hack it
     ChooseHackTarget { entity: Entity },
     // when you actually select the hack type and start hacking
     InitiateHack { target: HackTarget, turn_duration: usize },
+}
+
+#[derive(Clone, Debug)]
+pub enum TalkCallback {
+    ChooseTalkTarget { entity: Entity },
 }
 
 #[derive(Clone, Debug)]

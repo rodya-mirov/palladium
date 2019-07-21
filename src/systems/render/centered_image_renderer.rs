@@ -5,6 +5,8 @@ use quicksilver::{
     graphics::Image,
 };
 
+use game_state::Loadable;
+
 use numerics::force_max;
 
 pub struct CenteredVerticalImagesRenderer<'a> {
@@ -21,7 +23,7 @@ impl<'a, 'b> System<'a> for CenteredVerticalImagesRenderer<'a> {
     type SystemData = ();
 
     fn run(&mut self, _data: Self::SystemData) {
-        if !game_state::all_loaded(self.images).unwrap_or(false) {
+        if !self.images.is_loaded().unwrap_or(false) {
             return;
         }
 

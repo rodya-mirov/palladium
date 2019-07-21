@@ -11,7 +11,7 @@ pub struct DialogueBuilder {
 struct DialogueOptionBuilder {
     selected_text: String,
     unselected_text: String,
-    callbacks: Vec<DialogueCallback>,
+    callbacks: Vec<Callback>,
 }
 
 impl DialogueBuilder {
@@ -23,7 +23,7 @@ impl DialogueBuilder {
         }
     }
 
-    pub fn with_option(mut self, text: &str, callbacks: Vec<DialogueCallback>) -> Self {
+    pub fn with_option(mut self, text: &str, callbacks: Vec<Callback>) -> Self {
         self.options.push(DialogueOptionBuilder {
             selected_text: text.to_string(),
             unselected_text: text.to_string(),
@@ -71,16 +71,8 @@ pub fn end_dialogue(focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStat
     };
 }
 
-pub fn launch_dialogue(builder: DialogueBuilder, focus: &mut KeyboardFocus, dialogue_state: &mut DialogueStateResource) {
-    if *focus != KeyboardFocus::GameMap {
-        panic!("Can only start dialogue from game map!");
-    }
-
-    *focus = KeyboardFocus::Dialogue;
-    *dialogue_state = DialogueStateResource {
-        is_initialized: InitializationState::NotStarted,
-        state: Some(builder.build()),
-    };
+pub fn launch_dialogue(builder: DialogueBuilder, callbacks: &mut Callbacks) {
+    callbacks.push(Callback::StartDialogue(builder.build()));
 }
 
 const LINE_WIDTH: usize = 60;

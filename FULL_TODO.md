@@ -6,17 +6,21 @@ TODO for individual features (commits may handle any number of these)
 - Fire (spreads to burnables, consumes oxygen, burns out when stuff burns up or it
   runs out of air)
 - When an NPC dies it should leave behind a corpse (or something?
-- [T] to talk to NPCs (probably with a popup like hacking); currently can't speak their language
+- [R] to repair broken objects (doors, lights, airlocks, windows?); require skill, require components
+- Sounds (nearby things can hear them, some kind of transient entity or maybe just another callback)
+  Maybe a good time to add a "transient" tag to entities and delete them at the beginning of each update loop
+  Maybe not
+- Inventory (objects can be possessed by an entity; must be collected somehow?)
 
 ### Refactors
 
-- DialogueCallback -> Callback; we should be able to launch callbacks wherever, and
-  catch them with a later system, instead of tying them to dialogue
-  - while you're in there: when you die, it should launch the opening dialogue again
 - If we disable the parallel feature, can we use dispatchers? This would be a serious
   help if (e.g.) we want persistent state across runs of a System (e.g. caching)
 - Destructible / mutable tiles (as setup for a big meteor hitting the station, or
   a big bomb going off, or whatever)
+- Move components into their own crate
+- Move worldgen into its own crate
+- Move loadable into its own crate (and add a proc-macro derive crate as well)
 
 ### UI/UX
 
@@ -34,12 +38,12 @@ TODO for individual features (commits may handle any number of these)
 - Put RNG in resources (with save/load) and get consistent entity iteration order
   so it's impossible to game the RNG with save/load)
 - CanSuffocate should be a part of Breathe
+- Context-aware control indicators (e.g. "[H] Hack" only appears if there is an adjacent hackable)
 
 ### Big
 
 - Seriously consider if the "spaceship" setting is interesting enough (maybe not)
 - Start thinking about more interesting worldgen
-- Start thinking about NPCs
 - Start thinking about how to plug in skills
 
 ### Performance Stuff

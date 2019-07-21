@@ -7,10 +7,10 @@ use std::collections::HashMap;
 
 use quicksilver::graphics::Image;
 
-use components::{Breathes, Player};
+use components::{Breathes, Hackable, HasPosition, Player, Talkable};
 use resources::{GameClock, GameMapDisplayOptions, GameMapRenderParams};
 
-use image_render_helper::{render_image_corner, render_images_corner, Alignment, Corner};
+use image_render_helper::{render_images_corner, Alignment, Corner};
 use numerics::force_max;
 
 #[derive(SystemData)]
@@ -18,6 +18,11 @@ pub struct ControlsRendererSystemData<'a> {
     player: ReadStorage<'a, Player>,
     breathes: ReadStorage<'a, Breathes>,
     game_clock: Read<'a, GameClock>,
+
+    has_position: ReadStorage<'a, HasPosition>,
+    hackable: ReadStorage<'a, Hackable>,
+    talkable: ReadStorage<'a, Talkable>,
+    entities: Entities<'a>,
 
     game_map_render_params: Read<'a, GameMapRenderParams>,
     game_map_display_options: Read<'a, GameMapDisplayOptions>,
@@ -35,29 +40,86 @@ impl<'a> System<'a> for ControlsRendererSetup {
 /// System which renders all the controls stuff
 pub struct ControlsRenderer<'a> {
     pub window: &'a mut Window,
-    pub controls_image: &'a mut Asset<Image>,
+    pub controls_image: &'a mut game_state::ControlsImages,
     pub tileset: &'a mut Asset<HashMap<char, Image>>,
+}
+
+impl<'a, 'b> ControlsRenderer<'b> {
+    fn render_controls_image(&mut self, data: &mut ControlsRendererSystemData<'a>) {
+        let player_position = (&data.player, &data.has_position)
+            .join()
+            .map(|(_, hp)| hp.position)
+            .next()
+            .expect("Player should have position");
+
+        let adj_positions = super::super::direct_neighbors(player_position);
+
+        let window = &mut self.window;
+        let (hack, repair, talk) = (
+            &mut self.controls_image.hack,
+            &mut self.controls_image.repair,
+            &mut self.controls_image.talk,
+        );
+
+        hack.execute(|hack| {
+            repair.execute(|repair| {
+                talk.execute(|talk| {
+                    let mut is_hack = false;
+                    let mut is_talk = false;
+                    let is_repair = false;
+
+                    for (entity, hp) in (&data.entities, &data.has_position).join() {
+                        if adj_positions.iter().any(|ap| *ap == hp.position) {
+                            if data.hackable.contains(entity) {
+                                is_hack = true;
+                            }
+                            if data.talkable.contains(entity) {
+                                is_talk = true;
+                            }
+                        }
+                    }
+
+                    let mut images: Vec<&Image> = Vec::new();
+                    if is_hack {
+                        images.push(&hack);
+                    }
+                    if is_talk {
+                        images.push(&talk);
+                    }
+                    if is_repair {
+                        images.push(&repair);
+                    }
+
+                    let offset = data.game_map_render_params.controls_image_offset_px;
+
+                    image_render_helper::render_images_corner(
+                        window,
+                        &images,
+                        offset,
+                        Vector::new(5.0, 5.0),
+                        Corner::UpperRight,
+                        Alignment::Vertical,
+                    );
+
+                    Ok(())
+                })
+            })
+        })
+        .expect("Rendering should be successful");
+    }
 }
 
 impl<'a, 'b> System<'a> for ControlsRenderer<'b> {
     type SystemData = ControlsRendererSystemData<'a>;
 
-    fn run(&mut self, data: Self::SystemData) {
-        let window = &mut self.window;
+    fn run(&mut self, mut data: Self::SystemData) {
         if !data.game_map_display_options.display_controls_pane {
             return;
         }
 
-        // render controls image
-        self.controls_image
-            .execute(|image| {
-                let offset = data.game_map_render_params.controls_image_offset_px;
+        self.render_controls_image(&mut data);
 
-                render_image_corner(window, image, offset, Corner::UpperRight);
-
-                Ok(())
-            })
-            .expect("Should work!");
+        let window = &mut self.window;
 
         // render clock
         self.tileset

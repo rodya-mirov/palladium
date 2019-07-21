@@ -3,7 +3,7 @@ use super::*;
 use std::collections::HashMap;
 
 use components::{Breathes, CanSuffocate, HasPosition, OxygenContainer};
-use resources::{DialogueStateResource, KeyboardFocus, NpcMoves};
+use resources::{Callbacks, NpcMoves};
 
 fn safe_subtract(start: usize, subtraction: usize) -> usize {
     if start > subtraction {
@@ -26,8 +26,7 @@ pub struct BreathSystemData<'a> {
     entities: Entities<'a>,
 
     npc_moves: Read<'a, NpcMoves>,
-    dsr: Write<'a, DialogueStateResource>,
-    keyboard_focus: Write<'a, KeyboardFocus>,
+    callbacks: Write<'a, Callbacks>,
 }
 
 pub struct BreatheSystem;
@@ -58,14 +57,14 @@ impl<'a> System<'a> for BreatheSystem {
                 lose_oxygen(breathe, constants::oxygen::SLOW_DROP_SPEED);
                 if breathe.contents == 0 {
                     if let Some(cs) = data.can_suffocate.get(entity) {
-                        process_suffocate(entity, cs, &mut data.keyboard_focus, &mut data.dsr, &data.entities);
+                        process_suffocate(entity, cs, &mut data.callbacks, &data.entities);
                     }
                 }
             } else {
                 lose_oxygen(breathe, constants::oxygen::FAST_DROP_SPEED);
                 if breathe.contents == 0 {
                     if let Some(cs) = data.can_suffocate.get(entity) {
-                        process_suffocate(entity, cs, &mut data.keyboard_focus, &mut data.dsr, &data.entities);
+                        process_suffocate(entity, cs, &mut data.callbacks, &data.entities);
                     }
                 }
             }
@@ -81,17 +80,17 @@ fn lose_oxygen(breathe: &mut Breathes, loss: usize) {
     breathe.contents = safe_subtract(breathe.contents, loss);
 }
 
-fn process_suffocate(entity: Entity, cs: &CanSuffocate, focus: &mut KeyboardFocus, dsr: &mut DialogueStateResource, entities: &Entities) {
-    use resources::DialogueCallback;
+fn process_suffocate(entity: Entity, cs: &CanSuffocate, callbacks: &mut Callbacks, entities: &Entities) {
+    use resources::Callback;
 
     match cs {
         CanSuffocate::Player => {
             let builder = dialogue_helpers::DialogueBuilder::new(
                 "You have been without air for too long.\n\nThis life is over, but the tether pulls you back.",
             )
-            .with_option("[Continue]", vec![DialogueCallback::EndDialogue, DialogueCallback::LoadGame]);
+            .with_option("[Continue]", vec![Callback::EndDialogue, Callback::LoadGame]);
 
-            dialogue_helpers::launch_dialogue(builder, focus, dsr);
+            dialogue_helpers::launch_dialogue(builder, callbacks);
         }
         CanSuffocate::Death => {
             // thing dies, uh, delete it

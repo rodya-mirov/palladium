@@ -253,11 +253,11 @@ impl Map {
                             fg_color: color,
                             disabled: false,
                         })
+                        .with(components::Talkable { name: "Alien".to_string() })
                         .with(components::Visible {
                             visibility: VisibilityType::NotSeen,
                             memorable: false,
                         })
-                        // TODO: with Npc::Alien::Wanders or something
                         .with(components::BlocksMovement)
                         .build();
                 }
