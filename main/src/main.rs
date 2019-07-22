@@ -1,6 +1,5 @@
 #![allow(clippy::collapsible_if)]
 #![allow(clippy::needless_range_loop)]
-// #![deny(clippy::print_stdout)] // TODO: do we need this
 
 #[macro_use]
 extern crate specs;
@@ -40,7 +39,18 @@ const CLEAR: Color = Color {
     a: 0.0,
 };
 
+fn set_panic_hook() {
+    #[cfg(feature = "stdweb")]
+    {
+        std::panic::set_hook(Box::new(|info| {
+            stdweb::print_error_panic(&info.to_string());
+        }));
+    }
+}
+
 fn main() {
+    set_panic_hook();
+
     let settings = Settings {
         scale: quicksilver::graphics::ImageScaleStrategy::Blur,
         ..Default::default()

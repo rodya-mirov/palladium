@@ -234,7 +234,7 @@ impl<'a> System<'a> for SerializeSystem {
             let mut ser = ron::ser::Serializer::new(Some(Default::default()), true);
 
             SerializeComponents::<NoError, SaveComponent>::serialize(&data.components, &data.entities, &data.marker, &mut ser)
-                .unwrap_or_else(|e| eprintln!("Serializing worldstate error: {}", e));
+                .unwrap_or_else(|e| panic!("Serializing worldstate error: {}", e));
 
             let saved_components = ser.into_output_string();
 
@@ -291,12 +291,12 @@ impl<'a> System<'a> for DeserializeSystem {
                     &mut data.allocator,
                     &mut de,
                 )
-                .unwrap_or_else(|e| eprintln!("Error: {}", e));
+                .unwrap_or_else(|e| panic!("Error: {}", e));
 
                 data.resources
                     .load_from(ron::de::from_bytes(&top_save.resources).expect("Deserialization should succeed"));
             } else {
-                eprintln!("Load requested, but no save game data is present");
+                // eprintln!("Load requested, but no save game data is present");
             }
 
             data.render_stale.0 = true;

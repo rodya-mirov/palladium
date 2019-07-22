@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-touch src/main.rs && \
+touch loader/src/lib.rs && \
+    touch main/src/main.rs && \
     cargo fmt -- --check && \
     cargo clippy -- -D warnings && \
-    cargo test
+    cargo test && \
+    cargo web check -p palladium

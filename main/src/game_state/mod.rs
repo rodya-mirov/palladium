@@ -10,6 +10,8 @@ use quicksilver::{
 };
 use specs::Builder;
 
+use loader::Loadable;
+
 use resources::*;
 use world::{Map, MapGenerationParams, TilePos, WorldState};
 
@@ -253,33 +255,6 @@ impl MainState {
     }
 }
 
-// TODO: move this off into its own crate and probably put in a derive
-pub trait Loadable {
-    fn is_loaded(&mut self) -> QsResult<bool>;
-}
-
-impl<T> Loadable for Asset<T> {
-    fn is_loaded(&mut self) -> QsResult<bool> {
-        let mut loaded = false;
-
-        self.execute(|_| {
-            loaded = true;
-            Ok(())
-        })?;
-
-        Ok(loaded)
-    }
-}
-
-impl<T> Loadable for &mut T
-where
-    T: Loadable,
-{
-    fn is_loaded(&mut self) -> QsResult<bool> {
-        (*self).is_loaded()
-    }
-}
-
 impl Loadable for DialogueAssets {
     fn is_loaded(&mut self) -> QsResult<bool> {
         let mut out = true;
@@ -311,31 +286,6 @@ impl Loadable for ControlsImages {
         out &= self.repair.is_loaded()?;
 
         Ok(out)
-    }
-}
-
-impl<T> Loadable for Option<T>
-where
-    T: Loadable,
-{
-    fn is_loaded(&mut self) -> QsResult<bool> {
-        match self.as_mut() {
-            Some(loadable) => loadable.is_loaded(),
-            None => Ok(true),
-        }
-    }
-}
-
-impl<T> Loadable for Vec<T>
-where
-    T: Loadable,
-{
-    fn is_loaded(&mut self) -> QsResult<bool> {
-        let mut loaded = true;
-        for loadable in self.iter_mut() {
-            loaded &= loadable.is_loaded()?;
-        }
-        Ok(loaded)
     }
 }
 

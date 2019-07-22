@@ -1,0 +1,25 @@
+[package]
+name = "palladium"
+version = "0.2.0"
+authors = ["Richard Rast <richard.rast@gmail.com>"]
+edition = "2018"
+
+[features]
+timing = []
+wasm = [ "stdweb" ]
+
+[dependencies]
+loader = { path = "../loader" }
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_cbor = "0.9"
+snap = "0.2"
+ron = "0.5.1"
+rand = "0.7"
+rand_isaac = "0.2"
+specs = { version = "0.15", default-features = false, features = ["shred-derive", "specs-derive", "serde", "uuid_entity"] }
+# More features: "collisions", "complex_shapes", "immi_ui", "sounds", gamepads
+quicksilver = { version = "0.3.6", default-features = false, features = ["fonts", "saving"] }
+
+stdweb = { version = "*", optional = true }

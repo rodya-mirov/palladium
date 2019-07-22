@@ -5,7 +5,7 @@ use quicksilver::{
     graphics::Image,
 };
 
-use game_state::Loadable;
+use loader::Loadable;
 
 use numerics::force_max;
 
